@@ -5,6 +5,9 @@ import { ProductDetailScreen } from '../screens/farmer/ProductDetailScreen';
 import { CartScreen } from '../screens/farmer/CartScreen';
 import { OrderConfirmationScreen } from '../screens/farmer/OrderConfirmationScreen';
 import { AddProductScreen } from '../features/farmer/AddProduct';
+import { FarmerOrdersScreen } from '../screens/farmer/FarmerOrdersScreen';
+import { TrackingScreen } from '../screens/farmer/TrackingScreen';
+import { PaymentScreen } from '../screens/farmer/PaymentScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,6 +24,9 @@ export const FarmerStack = () => {
                <Stack.Screen name="Cart" component={CartScreen} options={{ title: 'My Cart' }} />
                <Stack.Screen name="OrderConfirmation" component={OrderConfirmationScreen} options={{ headerShown: false }} />
                <Stack.Screen name="AddProduct" component={AddProductScreen} />
+               <Stack.Screen name="Payment" component={PaymentScreen} options={{ headerShown: false }} />
+               <Stack.Screen name="Tracking" component={TrackingScreen} options={{ headerShown: false }} />
+               <Stack.Screen name="FarmerOrders" component={FarmerOrdersScreen} options={{ title: 'My Orders' }} />
           </Stack.Navigator>
      );
 };

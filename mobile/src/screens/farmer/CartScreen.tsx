@@ -7,6 +7,8 @@ import { useAuth } from '../../context/AuthContext';
 
 const API_URL = 'http://192.168.0.101:5000';
 
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 export const CartScreen = () => {
      const navigation = useNavigation<any>();
      const { cartItems, getCartTotal, removeFromCart, clearCart } = useCart();
@@ -15,51 +17,13 @@ export const CartScreen = () => {
      const [isLoading, setIsLoading] = useState(false);
      const [deliveryAddress, setDeliveryAddress] = useState('Farm house, main village road');
 
-     const handlePlaceOrder = async () => {
-          setIsLoading(true);
-          try {
-               if (!user?.id) {
-                    Alert.alert('Not logged in', 'Please log in again to place an order.');
-                    return;
-               }
-
-               const response = await fetch(`${API_URL}/orders`, {
-                    method: 'POST',
-                    headers: {
-                         'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                         farmerId: user.id,
-                         items: cartItems.map(item => ({
-                              productId: item.id,
-                              name: item.name,
-                              price: item.price,
-                              quantity: item.quantity
-                         })),
-                         totalAmount: total,
-                         deliveryAddress,
-                    }),
-               });
-
-               const data = await response.json();
-
-               if (response.ok) {
-                    clearCart();
-                    navigation.navigate('OrderConfirmation', { orderId: data.orderId });
-               } else {
-                    Alert.alert('Order Failed', data.message || 'Something went wrong');
-               }
-          } catch (error) {
-               console.error(error);
-               Alert.alert('Error', 'Could not connect to server');
-          } finally {
-               setIsLoading(false);
-          }
+     const handlePlaceOrder = () => {
+          navigation.navigate('Payment');
      };
 
      if (cartItems.length === 0) {
           return (
-               <View className="flex-1 justify-center items-center bg-stone-50 p-6">
+               <SafeAreaView className="flex-1 justify-center items-center bg-stone-50 p-6">
                     <View className="bg-stone-100 p-8 rounded-full mb-6">
                          <ShoppingCart size={64} color="#a8a29e" />
                     </View>
@@ -73,12 +37,12 @@ export const CartScreen = () => {
                     >
                          <Text className="text-white font-bold text-lg">Start Shopping</Text>
                     </TouchableOpacity>
-               </View>
+               </SafeAreaView>
           );
      }
 
      return (
-          <View className="flex-1 bg-stone-50">
+          <SafeAreaView className="flex-1 bg-stone-50" edges={['top', 'left', 'right']}>
                <FlatList
                     data={cartItems}
                     keyExtractor={(item) => item.id}
@@ -121,12 +85,12 @@ export const CartScreen = () => {
                               <ActivityIndicator color="white" />
                          ) : (
                               <>
-                                   <Text className="text-white font-bold text-xl mr-2">Place Order</Text>
+                                   <Text className="text-white font-bold text-xl mr-2">Proceed to Payment</Text>
                                    <ArrowRight size={24} color="white" />
                               </>
                          )}
                     </TouchableOpacity>
                </View>
-          </View>
+          </SafeAreaView>
      );
 };

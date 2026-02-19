@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCart } from '../../context/CartContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ArrowLeft } from 'lucide-react-native';
 
 export const ProductDetailScreen = () => {
      const navigation = useNavigation<any>();
@@ -9,48 +11,50 @@ export const ProductDetailScreen = () => {
      const { addToCart } = useCart();
      const { product } = route.params;
 
-     const handleAddToCart = () => {
-          addToCart(product);
-          Alert.alert('Success', 'Product added to cart!');
-     };
-
      return (
-          <ScrollView className="flex-1 bg-white">
-               <View className="bg-green-50 p-8 items-center justify-center">
-                    <View className="w-32 h-32 bg-green-200 rounded-full items-center justify-center mb-4">
-                         <Text className="text-4xl">🌾</Text>
+          <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+               {/* Back Button */}
+               <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    className="absolute top-4 left-4 z-10 bg-white/80 p-2 rounded-full shadow-lg"
+               >
+                    <ArrowLeft size={24} color="#333" />
+               </TouchableOpacity>
+
+               <ScrollView>
+                    <Image
+                         source={{ uri: product.image || 'https://via.placeholder.com/400' }}
+                         className="w-full h-80 bg-stone-200"
+                         resizeMode="cover"
+                    />
+                    <View className="p-6 -mt-6 bg-white rounded-t-3xl shadow-lg">
+                         <View className="flex-row justify-between items-start mb-4">
+                              <View className="flex-1 mr-4">
+                                   <Text className="text-2xl font-bold text-stone-800 mb-1">{product.name}</Text>
+                                   <Text className="text-stone-500 font-medium">{product.category}</Text>
+                              </View>
+                              <View className="bg-emerald-50 px-4 py-2 rounded-xl">
+                                   <Text className="text-emerald-700 font-bold text-xl">₹{product.price}</Text>
+                              </View>
+                         </View>
+
+                         <Text className="text-stone-600 leading-6 mb-6">
+                              {product.description || "Fresh and high quality product directly from the best sources. Perfect for your farming needs."}
+                         </Text>
                     </View>
-                    <Text className="text-2xl font-bold text-gray-800 text-center">{product.name}</Text>
-                    <Text className="text-green-700 text-lg mt-2 font-semibold">₹{product.price.toFixed(2)}</Text>
+               </ScrollView>
+
+               <View className="p-4 border-t border-stone-100 bg-white pb-8">
+                    <TouchableOpacity
+                         className="bg-emerald-600 w-full py-4 rounded-2xl items-center shadow-lg active:bg-emerald-700"
+                         onPress={() => {
+                              addToCart(product);
+                              Alert.alert('Added to Cart', `${product.name} is now in your cart`);
+                         }}
+                    >
+                         <Text className="text-white font-bold text-xl">Add to Cart</Text>
+                    </TouchableOpacity>
                </View>
-
-               <View className="p-6">
-                    <View className="mb-6">
-                         <Text className="text-gray-500 mb-1 font-medium">Category</Text>
-                         <Text className="text-lg text-gray-800 capitalize bg-gray-100 self-start px-3 py-1 rounded">{product.category}</Text>
-                    </View>
-
-                    <View className="mb-8">
-                         <Text className="text-gray-500 mb-1 font-medium">Availability</Text>
-                         <Text className="text-lg text-gray-800">{product.quantityAvailable} units in stock</Text>
-                    </View>
-
-                    <View className="space-y-4">
-                         <TouchableOpacity
-                              className="bg-green-600 py-4 rounded-xl items-center shadow-lg active:bg-green-700"
-                              onPress={handleAddToCart}
-                         >
-                              <Text className="text-white font-bold text-lg">Add to Cart</Text>
-                         </TouchableOpacity>
-
-                         <TouchableOpacity
-                              className="bg-white border-2 border-green-600 py-4 rounded-xl items-center active:bg-green-50"
-                              onPress={() => navigation.navigate('Cart')}
-                         >
-                              <Text className="text-green-700 font-bold text-lg">Go to Cart</Text>
-                         </TouchableOpacity>
-                    </View>
-               </View>
-          </ScrollView>
+          </SafeAreaView>
      );
 };

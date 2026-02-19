@@ -24,6 +24,13 @@ export const OrderConfirmationScreen = () => {
                </Text>
 
                <TouchableOpacity
+                    className="bg-white border-2 border-emerald-600 px-8 py-4 rounded-xl shadow-sm active:bg-emerald-50 w-full mb-4"
+                    onPress={() => navigation.navigate('Tracking', { orderId: orderId })}
+               >
+                    <Text className="text-emerald-700 font-bold text-lg text-center">Track Order</Text>
+               </TouchableOpacity>
+
+               <TouchableOpacity
                     className="bg-green-600 px-8 py-4 rounded-xl shadow-md active:bg-green-700 w-full"
                     onPress={() => navigation.navigate('FarmerHome')}
                >

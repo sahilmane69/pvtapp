@@ -7,15 +7,7 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
-    res.json(
-      products.map((p) => ({
-        id: p._id,
-        name: p.name,
-        category: p.category,
-        price: p.price,
-        quantityAvailable: p.quantityAvailable,
-      })),
-    );
+    res.json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
     res.status(500).json({ message: "Server error" });

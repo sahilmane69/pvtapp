@@ -1,53 +1,162 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, Image, ScrollView, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
-import { ShoppingBag, LogOut } from 'lucide-react-native';
+import { ShoppingCart, Search, MapPin, ChevronRight, Package, Tractor, Leaf, Wrench, Sprout, ShoppingBag } from 'lucide-react-native';
+
+const CATEGORIES = [
+     { id: '1', name: 'Seeds', icon: Sprout, image: 'https://images.unsplash.com/photo-1591857177580-dc82b9e4e11c?w=400&q=80', slug: 'Seeds' },
+     { id: '2', name: 'Fertilizers', icon: Leaf, image: 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?w=400&q=80', slug: 'Fertilizers' },
+     { id: '3', name: 'Tools', icon: Wrench, image: 'https://images.unsplash.com/photo-1416879115507-1961852e6157?w=400&q=80', slug: 'Tools' },
+     { id: '4', name: 'Equipment', icon: Tractor, image: 'https://images.unsplash.com/photo-1530267981375-f0de93cdf5b8?w=400&q=80', slug: 'Equipment' },
+     { id: '5', name: 'Pesticides', icon: Package, image: 'https://images.unsplash.com/photo-1589923188900-85dae5233f71?w=400&q=80', slug: 'Pesticides' },
+];
+
+const API_URL = 'http://192.168.0.101:5000';
+
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const FarmerHomeScreen = () => {
      const navigation = useNavigation<any>();
-     const { logout, user } = useAuth();
+     const { user } = useAuth();
+     const [featuredProducts, setFeaturedProducts] = useState([]);
+
+     useEffect(() => {
+          fetch(`${API_URL}/products`)
+               .then(res => res.json())
+               .then(data => setFeaturedProducts(data.slice(0, 5)))
+               .catch(err => console.error(err));
+     }, []);
 
      return (
           <View className="flex-1 bg-emerald-700">
-               <View className="pt-14 px-6 pb-6 bg-emerald-700">
-                    <Text className="text-2xl font-bold text-white mb-1">
-                         Get in 15 Minutes
-                    </Text>
-                    <Text className="text-emerald-100">
-                         Welcome{user?.username ? `, ${user.username}` : ''} 👋
-                    </Text>
+               <SafeAreaView edges={['top']} className="bg-emerald-700">
+                    <View className="pb-6 px-4 shadow-lg bg-emerald-700">
+                         <View className="flex-row justify-between items-center mb-4">
+                              <View className="flex-1">
+                                   <Text className="text-emerald-100 text-xs font-medium uppercase tracking-wider">Delivering to</Text>
+                                   <TouchableOpacity className="flex-row items-center">
+                                        <Text className="text-white text-lg font-bold mr-1">Farm House, Village...</Text>
+                                        <MapPin size={16} color="#d1fae5" />
+                                   </TouchableOpacity>
+                              </View>
+                              <TouchableOpacity
+                                   className="bg-emerald-600 p-2 rounded-full relative"
+                                   onPress={() => navigation.navigate('Cart')}
+                              >
+                                   <ShoppingCart size={24} color="white" />
+                                   {/* Badge could go here */}
+                              </TouchableOpacity>
+                         </View>
 
-                    <View className="mt-4 bg-white/10 border border-emerald-400/40 rounded-2xl px-4 py-3">
-                         <Text className="text-emerald-50 text-sm">Search “seeds”</Text>
+                         {/* Search Bar */}
+                         <View className="bg-white rounded-2xl flex-row items-center px-4 py-3 shadow-md">
+                              <Search size={20} color="#9ca3af" />
+                              <TextInput
+                                   placeholder="Search 'tomato seeds'..."
+                                   className="flex-1 ml-2 text-stone-700 text-base"
+                                   placeholderTextColor="#9ca3af"
+                              />
+                         </View>
                     </View>
-               </View>
+               </SafeAreaView>
 
-               <View className="flex-1 bg-stone-50 rounded-t-3xl -mt-4 p-6">
-                    <View className="bg-emerald-50 rounded-2xl p-4 mb-6">
-                         <Text className="text-sm text-emerald-700 mb-1">Happiness plants…</Text>
-                         <Text className="text-xl font-bold text-emerald-900">
-                              Get up to 35% OFF
-                         </Text>
-                    </View>
+               <View className="flex-1 bg-stone-50">
+                    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
 
-                    <TouchableOpacity
-                         className="bg-emerald-600 w-full py-5 rounded-2xl shadow-sm flex-row justify-center items-center mb-4"
-                         onPress={() => navigation.navigate('ProductList')}
-                         activeOpacity={0.8}
-                    >
-                         <ShoppingBag color="white" size={24} />
-                         <Text className="text-white font-bold text-xl ml-2">Order Products</Text>
-                    </TouchableOpacity>
+                         {/* Quick Actions */}
+                         <View className="flex-row justify-between px-6 -mt-8 mb-6">
+                              <TouchableOpacity
+                                   className="bg-white p-4 rounded-2xl shadow-lg border border-emerald-50 w-[48%] flex-row items-center justify-center space-x-2"
+                                   onPress={() => navigation.navigate('FarmerOrders')}
+                                   activeOpacity={0.9}
+                              >
+                                   <Package size={24} color="#059669" />
+                                   <Text className="font-bold text-stone-700">My Orders</Text>
+                              </TouchableOpacity>
 
-                    <TouchableOpacity
-                         className="bg-white border text-stone-500 border-stone-200 w-full py-5 rounded-2xl flex-row justify-center items-center"
-                         onPress={logout}
-                         activeOpacity={0.7}
-                    >
-                         <LogOut color="#78716c" size={20} />
-                         <Text className="text-stone-500 font-bold text-lg ml-2">Sign Out</Text>
-                    </TouchableOpacity>
+                              <TouchableOpacity
+                                   className="bg-white p-4 rounded-2xl shadow-lg border border-emerald-50 w-[48%] flex-row items-center justify-center space-x-2"
+                                   onPress={() => navigation.navigate('ProductList')}
+                                   activeOpacity={0.9}
+                              >
+                                   <ShoppingCart size={24} color="#059669" />
+                                   <Text className="font-bold text-stone-700">All Products</Text>
+                              </TouchableOpacity>
+                         </View>
+
+                         {/* Categories */}
+                         <View className="px-4 mb-6">
+                              <View className="flex-row justify-between items-center mb-3">
+                                   <Text className="text-xl font-bold text-stone-800">Categories</Text>
+                                   <TouchableOpacity onPress={() => navigation.navigate('ProductList')}>
+                                        <Text className="text-emerald-600 font-semibold">See All</Text>
+                                   </TouchableOpacity>
+                              </View>
+                              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="pb-2">
+                                   {CATEGORIES.map((cat) => (
+                                        <TouchableOpacity
+                                             key={cat.id}
+                                             className="mr-4 items-center"
+                                             onPress={() => navigation.navigate('ProductList', { category: cat.slug })}
+                                        >
+                                             <View className="w-16 h-16 rounded-full bg-emerald-50 items-center justify-center border border-emerald-100 mb-2 overflow-hidden">
+                                                  <Image source={{ uri: cat.image }} className="w-full h-full opacity-90" resizeMode="cover" />
+                                             </View>
+                                             <Text className="text-xs font-medium text-stone-600">{cat.name}</Text>
+                                        </TouchableOpacity>
+                                   ))}
+                              </ScrollView>
+                         </View>
+
+                         {/* Banner */}
+                         <View className="mx-4 mb-8 rounded-2xl overflow-hidden shadow-sm relative h-40 bg-emerald-900 justify-center">
+                              <Image
+                                   source={{ uri: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800&q=80' }}
+                                   className="absolute inset-0 w-full h-full opacity-40"
+                                   resizeMode="cover"
+                              />
+                              <View className="px-6">
+                                   <Text className="text-yellow-400 font-bold mb-1">SUMMER SALE</Text>
+                                   <Text className="text-white text-2xl font-bold mb-2">Up to 50% Off on Tools</Text>
+                                   <TouchableOpacity
+                                        className="bg-white self-start px-4 py-2 rounded-lg"
+                                        onPress={() => navigation.navigate('ProductList', { category: 'Tools' })}
+                                   >
+                                        <Text className="text-emerald-900 font-bold">Shop Now</Text>
+                                   </TouchableOpacity>
+                              </View>
+                         </View>
+
+                         {/* Featured Products */}
+                         <View className="px-4 mb-20">
+                              <Text className="text-xl font-bold text-stone-800 mb-3">Featured Products</Text>
+                              {featuredProducts.map((item: any) => (
+                                   <TouchableOpacity
+                                        key={item._id}
+                                        className="bg-white mb-4 rounded-2xl p-3 flex-row shadow-sm border border-stone-100"
+                                        onPress={() => navigation.navigate('ProductDetail', { product: item })}
+                                   >
+                                        <Image
+                                             source={{ uri: item.image || 'https://via.placeholder.com/150' }}
+                                             className="w-24 h-24 rounded-xl bg-stone-200"
+                                        />
+                                        <View className="flex-1 ml-4 justify-between py-1">
+                                             <View>
+                                                  <Text className="font-bold text-stone-800 text-lg">{item.name}</Text>
+                                                  <Text className="text-stone-500 text-xs">{item.category}</Text>
+                                             </View>
+                                             <View className="flex-row justify-between items-center">
+                                                  <Text className="text-emerald-700 font-bold text-lg">₹{item.price}</Text>
+                                                  <View className="bg-emerald-50 p-2 rounded-full">
+                                                       <ShoppingBag size={16} color="#059669" />
+                                                  </View>
+                                             </View>
+                                        </View>
+                                   </TouchableOpacity>
+                              ))}
+                         </View>
+                    </ScrollView>
                </View>
           </View>
      );

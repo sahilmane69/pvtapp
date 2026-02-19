@@ -3,10 +3,13 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 // Product type inferred from our earlier mock data
 interface Product {
      id: string;
+     _id?: string;
      name: string;
      category: string;
      price: number;
      quantityAvailable: number;
+     image?: string;
+     description?: string;
 }
 
 export interface CartItem extends Product {
