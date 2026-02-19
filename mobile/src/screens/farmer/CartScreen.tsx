@@ -3,19 +3,25 @@ import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator } from
 import { useNavigation } from '@react-navigation/native';
 import { useCart } from '../../context/CartContext';
 import { ShoppingCart, Trash2, ArrowRight } from 'lucide-react-native';
+import { useAuth } from '../../context/AuthContext';
 
-const API_URL = 'http://192.168.0.104:5000';
+const API_URL = 'http://192.168.0.101:5000';
 
 export const CartScreen = () => {
      const navigation = useNavigation<any>();
      const { cartItems, getCartTotal, removeFromCart, clearCart } = useCart();
+     const { user } = useAuth();
      const total = getCartTotal();
      const [isLoading, setIsLoading] = useState(false);
+     const [deliveryAddress, setDeliveryAddress] = useState('Farm house, main village road');
 
      const handlePlaceOrder = async () => {
           setIsLoading(true);
           try {
-               const dummyUser = { id: '65cb8f8d6e9f1a0012345678' };
+               if (!user?.id) {
+                    Alert.alert('Not logged in', 'Please log in again to place an order.');
+                    return;
+               }
 
                const response = await fetch(`${API_URL}/orders`, {
                     method: 'POST',
@@ -23,14 +29,15 @@ export const CartScreen = () => {
                          'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                         farmerId: dummyUser.id,
+                         farmerId: user.id,
                          items: cartItems.map(item => ({
                               productId: item.id,
                               name: item.name,
                               price: item.price,
                               quantity: item.quantity
                          })),
-                         totalAmount: total
+                         totalAmount: total,
+                         deliveryAddress,
                     }),
                });
 

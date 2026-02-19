@@ -1,16 +1,63 @@
-import React from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { products } from '../../data/products';
+
+const API_URL = 'http://192.168.0.101:5000';
+
+interface Product {
+     id: string;
+     name: string;
+     category: string;
+     price: number;
+     quantityAvailable: number;
+}
 
 export const ProductListScreen = () => {
      const navigation = useNavigation<any>();
+     const [products, setProducts] = useState<Product[]>([]);
+     const [isLoading, setIsLoading] = useState(true);
+     const [isRefreshing, setIsRefreshing] = useState(false);
+
+     const fetchProducts = async () => {
+          try {
+               const response = await fetch(`${API_URL}/products`);
+               const data = await response.json();
+               setProducts(data);
+          } catch (error) {
+               console.error('Failed to load products', error);
+          } finally {
+               setIsLoading(false);
+               setIsRefreshing(false);
+          }
+     };
+
+     useEffect(() => {
+          fetchProducts();
+     }, []);
+
+     if (isLoading) {
+          return (
+               <View className="flex-1 justify-center items-center bg-gray-50">
+                    <ActivityIndicator size="large" color="#22c55e" />
+                    <Text className="mt-4 text-stone-500">Loading fresh products...</Text>
+               </View>
+          );
+     }
 
      return (
           <View className="flex-1 bg-gray-50 p-4">
                <FlatList
                     data={products}
                     keyExtractor={(item) => item.id}
+                    refreshControl={
+                         <RefreshControl
+                              refreshing={isRefreshing}
+                              onRefresh={() => {
+                                   setIsRefreshing(true);
+                                   fetchProducts();
+                              }}
+                         />
+                    }
                     renderItem={({ item }) => (
                          <View className="bg-white p-4 mb-3 rounded-lg shadow-sm border border-gray-100 flex-row justify-between items-center">
                               <View>

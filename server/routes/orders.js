@@ -5,7 +5,8 @@ const Order = require("../models/Order");
 // Create a new order
 router.post("/", async (req, res) => {
   try {
-    const { farmerId, items, totalAmount } = req.body;
+    const { farmerId, items, totalAmount, deliveryAddress, deliveryLocation } =
+      req.body;
 
     if (!farmerId || !items || items.length === 0) {
       return res
@@ -18,6 +19,11 @@ router.post("/", async (req, res) => {
       items,
       totalAmount: totalAmount || 0, // Should be calculated or passed from frontend
       status: "pending",
+      deliveryAddress: deliveryAddress || "",
+      deliveryLocation: {
+        lat: deliveryLocation?.lat ?? null,
+        lng: deliveryLocation?.lng ?? null,
+      },
     });
 
     const savedOrder = await newOrder.save();
@@ -73,11 +79,87 @@ router.patch("/:id/accept", async (req, res) => {
 
     order.status = "assigned";
     order.deliveryPartnerId = deliveryPartnerId;
+    // simple fixed fee per delivery for now
+    order.deliveryFee = order.deliveryFee || 30;
     await order.save();
 
     res.status(200).json({ message: "Order accepted successfully", order });
   } catch (error) {
     console.error("Error accepting order:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Mark order as delivered
+router.patch("/:id/complete", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { deliveryPartnerId } = req.body;
+
+    const order = await Order.findById(id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (
+      order.deliveryPartnerId &&
+      deliveryPartnerId &&
+      order.deliveryPartnerId.toString() !== deliveryPartnerId
+    ) {
+      return res.status(403).json({
+        message: "You are not assigned to this order",
+      });
+    }
+
+    order.status = "delivered";
+    await order.save();
+
+    res.json({ message: "Order marked as delivered", order });
+  } catch (error) {
+    console.error("Error completing order:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Delivery partner summary (earnings + completed orders)
+router.get("/delivery/:partnerId/summary", async (req, res) => {
+  try {
+    const { partnerId } = req.params;
+
+    const deliveredOrders = await Order.find({
+      deliveryPartnerId: partnerId,
+      status: "delivered",
+    });
+
+    const totalEarnings = deliveredOrders.reduce(
+      (sum, order) => sum + (order.deliveryFee || 0),
+      0,
+    );
+
+    res.json({
+      totalEarnings,
+      deliveredCount: deliveredOrders.length,
+    });
+  } catch (error) {
+    console.error("Error fetching delivery summary:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Delivery partner completed orders list
+router.get("/delivery/:partnerId/history", async (req, res) => {
+  try {
+    const { partnerId } = req.params;
+
+    const deliveredOrders = await Order.find({
+      deliveryPartnerId: partnerId,
+      status: "delivered",
+    }).sort({ createdAt: -1 });
+
+    res.json(deliveredOrders);
+  } catch (error) {
+    console.error("Error fetching delivery history:", error);
     res.status(500).json({ message: "Server error" });
   }
 });

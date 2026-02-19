@@ -28,6 +28,24 @@ const orderSchema = new mongoose.Schema({
     ref: "User",
     default: null,
   },
+  deliveryAddress: {
+    type: String,
+    default: "",
+  },
+  deliveryLocation: {
+    lat: {
+      type: Number,
+      default: null,
+    },
+    lng: {
+      type: Number,
+      default: null,
+    },
+  },
+  deliveryFee: {
+    type: Number,
+    default: 0,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

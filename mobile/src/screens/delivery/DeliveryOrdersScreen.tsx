@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 
-const API_URL = 'http://192.168.0.104:5000';
+const API_URL = 'http://192.168.0.101:5000';
 
 export const DeliveryOrdersScreen = () => {
      const [orders, setOrders] = useState<any[]>([]);

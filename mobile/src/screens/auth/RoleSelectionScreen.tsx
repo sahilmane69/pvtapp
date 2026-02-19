@@ -1,16 +1,48 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { Tractor, Truck } from 'lucide-react-native';
 
+const API_URL = 'http://192.168.0.101:5000';
+
 export const RoleSelectionScreen = () => {
      const [selectedRole, setSelectedRole] = useState<string | null>(null);
-     const { setUserRole } = useAuth();
+     const { user, setUserRole, setUser } = useAuth();
 
-     const handleRoleSelect = (role: any) => {
+     const handleRoleSelect = async (role: 'FARMER' | 'DELIVERY') => {
+          if (!user?.id) {
+               Alert.alert('Not logged in', 'Please log in again.');
+               return;
+          }
+
           setSelectedRole(role);
-          setUserRole(role);
-          console.log(`Role selected: ${role}`);
+
+          try {
+               const response = await fetch(`${API_URL}/auth/set-role`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                         userId: user.id,
+                         role: role === 'FARMER' ? 'farmer' : 'delivery',
+                    }),
+               });
+
+               const data = await response.json();
+
+               if (response.ok) {
+                    await setUser({
+                         id: user.id,
+                         username: user.username,
+                         role,
+                    });
+                    await setUserRole(role);
+               } else {
+                    Alert.alert('Error', data.message || 'Could not set role');
+               }
+          } catch (error) {
+               console.error(error);
+               Alert.alert('Error', 'Could not connect to server');
+          }
      };
 
      return (

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { AuthStack } from './AuthStack';
 import { FarmerStack } from './FarmerStack';
 import { DeliveryStack } from './DeliveryStack';
+import { AdminStack } from './AdminStack';
 import { ActivityIndicator, View } from 'react-native';
 
 export const RootNavigator = () => {
@@ -23,6 +24,8 @@ export const RootNavigator = () => {
                     <FarmerStack />
                ) : userRole === 'DELIVERY' ? (
                     <DeliveryStack />
+               ) : userRole === 'ADMIN' ? (
+                    <AdminStack />
                ) : (
                     <AuthStack />
                )}

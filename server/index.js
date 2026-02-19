@@ -18,6 +18,7 @@ mongoose
 
 app.use("/auth", require("./routes/auth"));
 app.use("/orders", require("./routes/orders"));
+app.use("/products", require("./routes/products"));
 
 app.get("/", (req, res) => {
   res.send("Server running");
