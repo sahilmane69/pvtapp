@@ -13,7 +13,8 @@ import {
      Settings,
      Clock,
      CheckCircle2,
-     LogOut
+     LogOut,
+     User as UserIcon
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
@@ -88,22 +89,24 @@ export const FarmerDashboardScreen = () => {
      return (
           <View className="flex-1 bg-background">
                {/* Header */}
-               <View className="bg-emerald-800 pb-12 rounded-b-[40px] shadow-premium">
+               <View className="bg-white pb-10 rounded-b-[48px] shadow-sm">
                     <SafeAreaView edges={['top']}>
-                         <View className="px-6 pt-4 flex-row justify-between items-center">
-                              <View>
-                                   <Text className="text-emerald-100/70 text-sm font-medium">Farmer Dashboard</Text>
-                                   <Text className="text-white text-2xl font-black">{user?.username || 'Farmer'}</Text>
+                         <View className="px-6 pt-6 flex-row justify-between items-center">
+                              <View className="flex-row items-center flex-1">
+                                   <View className="w-12 h-12 bg-neutral-100 rounded-2xl items-center justify-center mr-4 border border-neutral-200">
+                                        <UserIcon size={24} color="#059669" />
+                                   </View>
+                                   <View>
+                                        <Text className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">Farmer Portal</Text>
+                                        <Text className="text-neutral-900 text-2xl font-black italic">{user?.username || 'Farmer'}</Text>
+                                   </View>
                               </View>
                               <View className="flex-row items-center">
-                                   <TouchableOpacity className="bg-white/10 p-2.5 rounded-2xl mr-2">
-                                        <Bell size={22} color="white" />
-                                   </TouchableOpacity>
-                                   <TouchableOpacity 
-                                        className="bg-red-500/20 p-2.5 rounded-2xl"
+                                   <TouchableOpacity
+                                        className="bg-neutral-100 p-3 rounded-2xl border border-neutral-200"
                                         onPress={() => logout()}
                                    >
-                                        <LogOut size={22} color="white" />
+                                        <LogOut size={20} color="#64748B" />
                                    </TouchableOpacity>
                               </View>
                          </View>

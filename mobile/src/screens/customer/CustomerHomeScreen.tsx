@@ -1,140 +1,223 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, TextInput, Dimensions, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import {
-     ShoppingCart,
      Search,
      MapPin,
-     ChevronRight,
-     ChevronLeft,
-     Package,
-     Tractor,
-     Leaf,
-     Wrench,
-     Sprout,
-     ShoppingBag,
      Plus,
-     LogOut
+     LogOut,
+     User as UserIcon
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { API_URL } from '../../utils/constants';
 
 const { width } = Dimensions.get('window');
 
-const CATEGORIES = [
-     { id: '1', name: 'Seeds', icon: Sprout, color: '#DCFCE7' },
-     { id: '2', name: 'Fertilizers', icon: Leaf, color: '#FEF9C3' },
-     { id: '3', name: 'Tools', icon: Wrench, color: '#DBEAFE' },
-     { id: '4', name: 'Equipment', icon: Tractor, color: '#FFEDD5' },
+const BANNERS = [
+     {
+          id: '1',
+          title: '35% OFF',
+          subtitle: 'Organic Seeds & Tools',
+          cta: 'Shop Now',
+          image: 'https://images.unsplash.com/photo-1463320726281-696a485928c7?w=800&q=80',
+          color: '#006B44'
+     },
+     {
+          id: '2',
+          title: 'FRESH DEALS',
+          subtitle: 'Pure Farm Vegetables',
+          cta: 'Browse All',
+          image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
+          color: '#059669'
+     },
+     {
+          id: '3',
+          title: 'EQUIPMENT',
+          subtitle: 'Modern Farming Tools',
+          cta: 'View More',
+          image: 'https://images.unsplash.com/photo-1530519729491-acf5830006f0?w=800&q=80',
+          color: '#1E293B'
+     },
+     {
+          id: '4',
+          title: 'FERTILIZERS',
+          subtitle: 'Maximize Your Yield',
+          cta: 'Explore',
+          image: 'https://images.unsplash.com/photo-1599307734107-160243058f40?w=800&q=80',
+          color: '#065F46'
+     },
+     {
+          id: '5',
+          title: 'FRUIT BASKET',
+          subtitle: 'Farm Fresh Deliveries',
+          cta: 'Order Now',
+          image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&q=80',
+          color: '#15803D'
+     },
+     {
+          id: '6',
+          title: 'SMART FARM',
+          subtitle: 'IoT Irrigation Kits',
+          cta: 'Get Smart',
+          image: 'https://images.unsplash.com/photo-1589923188900-85da00a7398b?w=800&q=80',
+          color: '#0F172A'
+     }
 ];
+
+const BannerCarousel = () => {
+     const flatListRef = useRef<FlatList>(null);
+     const [activeIndex, setActiveIndex] = useState(0);
+     const timerRef = useRef<any>(null);
+     const isPaused = useRef(false);
+
+     const startAutoScroll = () => {
+          stopAutoScroll();
+          timerRef.current = setInterval(() => {
+               if (!isPaused.current) {
+                    let nextIndex = (activeIndex + 1) % BANNERS.length;
+                    flatListRef.current?.scrollToIndex({
+                         index: nextIndex,
+                         animated: true
+                    });
+                    setActiveIndex(nextIndex);
+               }
+          }, 4000);
+     };
+
+     const stopAutoScroll = () => {
+          if (timerRef.current) clearInterval(timerRef.current);
+     };
+
+     useEffect(() => {
+          startAutoScroll();
+          return () => stopAutoScroll();
+     }, [activeIndex]);
+
+     const renderItem = ({ item }: { item: typeof BANNERS[0] }) => (
+          <View style={{ width: width - 48 }} className="mx-6">
+               <View
+                    style={{ backgroundColor: item.color }}
+                    className="rounded-[40px] overflow-hidden flex-row items-center p-8 h-48 shadow-premium"
+               >
+                    <View className="flex-1 z-10">
+                         <Text className="text-white text-3xl font-black italic tracking-tighter uppercase">{item.title}</Text>
+                         <Text className="text-white/80 text-[10px] font-bold mb-5 uppercase tracking-widest">{item.subtitle}</Text>
+                         <TouchableOpacity className="bg-white self-start px-6 py-2.5 rounded-2xl shadow-sm">
+                              <Text style={{ color: item.color }} className="text-[10px] font-black uppercase tracking-wider">{item.cta}</Text>
+                         </TouchableOpacity>
+                    </View>
+                    <Image
+                         source={{ uri: item.image }}
+                         className="w-32 h-full rounded-3xl absolute right-4 opacity-80"
+                         resizeMode="cover"
+                    />
+               </View>
+          </View>
+     );
+
+     return (
+          <View className="mt-6">
+               <FlatList
+                    ref={flatListRef}
+                    data={BANNERS}
+                    renderItem={renderItem}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    snapToAlignment="center"
+                    snapToInterval={width}
+                    decelerationRate="fast"
+                    contentContainerStyle={{ paddingHorizontal: 0 }}
+                    onScrollBeginDrag={() => { isPaused.current = true; }}
+                    onScrollEndDrag={() => { isPaused.current = false; }}
+                    keyExtractor={(item) => item.id}
+                    getItemLayout={(_, index) => ({
+                         length: width,
+                         offset: width * index,
+                         index,
+                    })}
+                    onMomentumScrollEnd={(event) => {
+                         const newIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+                         setActiveIndex(newIndex);
+                    }}
+               />
+
+               {/* Indicators */}
+               <View className="flex-row justify-center mt-4">
+                    {BANNERS.map((_, index) => (
+                         <View
+                              key={index}
+                              className={`h-1.5 mx-1 rounded-full ${activeIndex === index ? 'w-6 bg-primary-branding' : 'w-2 bg-neutral-200'}`}
+                         />
+                    ))}
+               </View>
+          </View>
+     );
+};
 
 export const CustomerHomeScreen = () => {
      const navigation = useNavigation<any>();
-     const { user, logout } = useAuth();
-     const [featuredProducts, setFeaturedProducts] = useState([]);
+     const { logout } = useAuth();
+     const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
 
      useEffect(() => {
-          console.log('Fetching products from:', `${API_URL}/products`);
           fetch(`${API_URL}/products`)
-               .then(res => {
-                    if (!res.ok) {
-                         console.error('Server returned error:', res.status);
-                         return [];
-                    }
-                    return res.json();
-               })
+               .then(res => res.ok ? res.json() : [])
                .then(data => {
-                    console.log('Fetched products count:', data?.length);
                     setFeaturedProducts(data.slice(0, 10));
                })
                .catch(err => console.error('Product fetch error:', err));
      }, []);
 
      return (
-          <View className="flex-1 bg-white">
+          <View className="flex-1 bg-background">
                {/* Dynamic Header */}
-               <SafeAreaView edges={['top']} className="bg-primary-light pb-4">
-                    <View className="px-5 pt-4 flex-row justify-between items-center bg-primary-light">
-                         <View>
-                              <Text className="text-primary-branding text-xl font-black">Get in 15 Minutes</Text>
+               <SafeAreaView edges={['top']} className="bg-white pb-6 shadow-sm">
+                    <View className="px-6 pt-4 flex-row justify-between items-center">
+                         <View className="flex-1">
+                              <Text className="text-primary-branding text-2xl font-black italic tracking-tighter">FarminGo</Text>
                               <TouchableOpacity className="flex-row items-center mt-1">
-                                   <MapPin size={14} color="#006B44" />
-                                   <Text className="text-neutral-500 text-xs font-bold ml-1">Maharashtra Housing Board Pune</Text>
+                                   <MapPin size={12} color="#64748B" />
+                                   <Text className="text-neutral-500 text-xs font-bold ml-1" numberOfLines={1}>Maharashtra Housing Board Pune</Text>
                               </TouchableOpacity>
                          </View>
                          <View className="flex-row items-center">
-                              <View className="w-12 h-12 bg-white rounded-full items-center justify-center shadow-sm mr-3">
-                                   <Image
-                                        source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&q=80' }}
-                                        className="w-10 h-10 rounded-full"
-                                   />
+                              <View className="w-12 h-12 bg-neutral-100 rounded-2xl items-center justify-center mr-3 border border-neutral-200">
+                                   <UserIcon size={24} color="#64748B" />
                               </View>
                               <TouchableOpacity
-                                   className="bg-white p-2.5 rounded-2xl shadow-sm border border-neutral-100"
+                                   className="bg-neutral-100 p-3 rounded-2xl border border-neutral-200"
                                    onPress={() => logout()}
                               >
-                                   <LogOut size={22} color="#006B44" />
+                                   <LogOut size={20} color="#64748B" />
                               </TouchableOpacity>
                          </View>
                     </View>
 
-                    {/* Search Bar matching image */}
-                    <View className="px-5 mt-6">
-                         <View className="bg-white rounded-2xl flex-row items-center px-5 py-4 shadow-sm border border-neutral-100">
+                    {/* Improved Search Bar */}
+                    <View className="px-6 mt-6">
+                         <View className="bg-neutral-100 rounded-[24px] flex-row items-center px-5 py-4 border border-neutral-200">
+                              <Search size={20} color="#94A3B8" />
                               <TextInput
-                                   placeholder='Search "seeds"'
-                                   className="flex-1 text-neutral-900 text-lg font-medium"
+                                   placeholder='Search "High quality seeds"'
+                                   className="flex-1 text-neutral-900 text-base font-bold ml-3"
                                    placeholderTextColor="#94A3B8"
                               />
-                              <Search size={24} color="#1E293B" />
                          </View>
                     </View>
                </SafeAreaView>
 
                <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-                    {/* Hero Banner Section */}
-                    <View className="px-5 mt-6">
-                         <View className="bg-primary-light rounded-[32px] overflow-hidden flex-row items-center p-6 h-48 border border-neutral-50">
-                              <View className="flex-1">
-                                   <Text className="text-primary-branding text-2xl font-black">Happiness</Text>
-                                   <Text className="text-neutral-500 text-xs font-bold mb-3 italic">is having more plants...</Text>
-                                   <View className="bg-primary-branding self-start px-3 py-1.5 rounded-lg shadow-sm">
-                                        <Text className="text-white text-xs font-bold">Get up to 35% OFF</Text>
-                                   </View>
-                                   <TouchableOpacity className="mt-4 bg-white/50 self-start px-4 py-1 rounded-full border border-primary-branding/20">
-                                        <Text className="text-primary-branding text-[10px] font-black uppercase">Shop Now</Text>
-                                   </TouchableOpacity>
-                              </View>
-                              <Image
-                                   source={{ uri: 'https://images.unsplash.com/photo-1463320726281-696a485928c7?w=400&q=80' }}
-                                   className="w-32 h-full rounded-2xl"
-                                   resizeMode="cover"
-                              />
-                              {/* Arrows */}
-                              <TouchableOpacity className="absolute left-2 top-1/2 -mt-4 bg-white/40 p-1 rounded-full">
-                                   <ChevronLeft size={16} color="#006B44" />
-                              </TouchableOpacity>
-                              <TouchableOpacity className="absolute right-2 top-1/2 -mt-4 bg-white/40 p-1 rounded-full">
-                                   <ChevronRight size={16} color="#006B44" />
-                              </TouchableOpacity>
-                         </View>
-                         {/* Dots Indicator */}
-                         <View className="flex-row justify-center mt-3 space-x-1.5">
-                              <View className="w-1.5 h-1.5 rounded-full bg-primary-branding" />
-                              <View className="w-1.5 h-1.5 rounded-full bg-neutral-200" />
-                              <View className="w-1.5 h-1.5 rounded-full bg-neutral-200" />
-                              <View className="w-1.5 h-1.5 rounded-full bg-neutral-200" />
-                         </View>
-                    </View>
+                    {/* Hero Banner Section - Now a Carousel */}
+                    <BannerCarousel />
 
                     {/* Product Grid Area */}
-                    <View className="px-5 mt-8 mb-24">
+                    <View className="px-6 mt-8 mb-24">
                          <View className="flex-row justify-between items-center mb-6">
-                              <Text className="text-2xl font-black text-neutral-900 italic">Fresh Deals</Text>
+                              <Text className="text-2xl font-black text-neutral-900 italic tracking-tighter">FRESH DEALS</Text>
                               <TouchableOpacity>
-                                   <Text className="text-primary-branding font-bold">See All</Text>
+                                   <Text className="text-primary-branding font-black text-xs uppercase tracking-widest">See All</Text>
                               </TouchableOpacity>
                          </View>
 
@@ -142,32 +225,28 @@ export const CustomerHomeScreen = () => {
                               {featuredProducts.map((item: any) => (
                                    <View
                                         key={item._id}
-                                        className="bg-white rounded-3xl p-4 mb-6 shadow-card border border-neutral-50"
-                                        style={{ width: (width - 50) / 2 }}
+                                        className="bg-white rounded-[32px] p-4 mb-6 shadow-card border border-neutral-100"
+                                        style={{ width: (width - 60) / 2, height: 260 }}
                                    >
-                                        {/* Badge */}
-                                        <View className="absolute top-2 left-2 bg-green-500 px-1.5 py-0.5 rounded-md z-10">
-                                             <Text className="text-white text-[8px] font-bold">10% OFF</Text>
-                                        </View>
-
-                                        <View className="items-center mb-3">
+                                        <View className="items-center mb-4 bg-neutral-50 rounded-3xl p-4 h-32 justify-center">
                                              <Image
                                                   source={{ uri: item.image || 'https://via.placeholder.com/150' }}
-                                                  className="w-24 h-24 rounded-2xl bg-neutral-50"
+                                                  className="w-full h-full"
                                                   resizeMode="contain"
                                              />
+                                             <TouchableOpacity className="absolute bottom-[-10px] right-[-10px] bg-primary-branding p-3 rounded-2xl shadow-premium">
+                                                  <Plus size={20} color="#fff" />
+                                             </TouchableOpacity>
                                         </View>
 
-                                        <TouchableOpacity className="absolute top-20 right-2 bg-white p-1.5 rounded-xl shadow-premium border border-neutral-100">
-                                             <Plus size={20} color="#006B44" />
-                                        </TouchableOpacity>
-
-                                        <View>
-                                             <Text className="text-neutral-900 font-bold text-sm" numberOfLines={2}>{item.name}</Text>
-                                             <Text className="text-neutral-400 text-[10px] mt-0.5">{item.category}</Text>
-                                             <View className="flex-row items-center mt-3">
-                                                  <Text className="text-neutral-900 font-black text-base">₹{item.price}</Text>
-                                                  <Text className="text-neutral-400 text-[10px] line-through ml-2 font-medium">₹{Math.round(item.price * 1.15)}</Text>
+                                        <View className="flex-1 justify-between">
+                                             <View>
+                                                  <Text className="text-neutral-900 font-black text-sm italic" numberOfLines={2}>{item.name.toUpperCase()}</Text>
+                                                  <Text className="text-neutral-400 text-[10px] font-bold uppercase mt-1 tracking-widest">{item.category}</Text>
+                                             </View>
+                                             <View className="flex-row items-baseline mt-2">
+                                                  <Text className="text-neutral-900 font-black text-xl italic">₹{item.price}</Text>
+                                                  <Text className="text-neutral-400 text-xs line-through ml-2 font-bold">₹{Math.round(item.price * 1.3)}</Text>
                                              </View>
                                         </View>
                                    </View>
@@ -175,9 +254,6 @@ export const CustomerHomeScreen = () => {
                          </View>
                     </View>
                </ScrollView>
-
-               {/* Custom Bottom NavBar Placeholder Logic */}
-               {/* Note: This is usually handled by Tab Navigator, but I will style it in navigation config later */}
           </View>
      );
 };
