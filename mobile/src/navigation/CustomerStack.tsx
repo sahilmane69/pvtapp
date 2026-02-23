@@ -67,19 +67,13 @@ const CustomerTabs = () => (
 );
 
 /** Root customer stack: DrawerProvider wraps everything so any screen can open the drawer */
-export const CustomerStack = ({ navigation, route }: any) => {
-     // Get active route name from the nested navigator state if it exists
-     const state = navigation.getState();
-     const customerRootRoute = state?.routes.find((r: any) => r.name === 'CustomerRoot');
-     const nestedState = customerRootRoute?.state;
-     const activeRouteName = nestedState?.routes[nestedState.index]?.name ?? 'Home';
-
+export const CustomerStack = ({ navigation }: any) => {
      return (
           <DrawerProvider>
                <View style={{ flex: 1 }}>
                     <CustomerTabs />
-                    {/* Pass navigation down to avoid hook issues in sibling components */}
-                    <CustomerDrawer navigation={navigation} activeRouteName={activeRouteName} />
+                    {/* CustomerDrawer will handle its own state internally or via hooks */}
+                    <CustomerDrawer navigation={navigation} />
                </View>
           </DrawerProvider>
      );

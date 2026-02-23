@@ -5,6 +5,7 @@ import { FarmerStack } from './FarmerStack';
 import { DeliveryStack } from './DeliveryStack';
 import { AdminStack } from './AdminStack';
 import { CustomerStack } from './CustomerStack';
+import { TrackingScreen } from '../screens/farmer/TrackingScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { View, ActivityIndicator } from 'react-native';
@@ -36,6 +37,8 @@ export const RootNavigator = () => {
                ) : (
                     <RootStack.Screen name="AuthRoot" component={AuthStack} />
                )}
+               {/* Global screen accessible from any nested stack via navigation.navigate('Tracking') */}
+               <RootStack.Screen name="Tracking" component={TrackingScreen} />
           </RootStack.Navigator>
      );
 };
