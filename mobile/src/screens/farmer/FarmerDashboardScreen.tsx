@@ -12,7 +12,8 @@ import {
      Bell,
      Settings,
      Clock,
-     CheckCircle2
+     CheckCircle2,
+     LogOut
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
@@ -29,7 +30,7 @@ interface Stats {
 }
 
 export const FarmerDashboardScreen = () => {
-     const { user } = useAuth();
+     const { user, logout } = useAuth();
      const navigation = useNavigation<any>();
      const [stats, setStats] = useState<Stats>({
           totalOrders: 0,
@@ -94,9 +95,17 @@ export const FarmerDashboardScreen = () => {
                                    <Text className="text-emerald-100/70 text-sm font-medium">Farmer Dashboard</Text>
                                    <Text className="text-white text-2xl font-black">{user?.username || 'Farmer'}</Text>
                               </View>
-                              <TouchableOpacity className="bg-white/10 p-2.5 rounded-2xl">
-                                   <Bell size={22} color="white" />
-                              </TouchableOpacity>
+                              <View className="flex-row items-center">
+                                   <TouchableOpacity className="bg-white/10 p-2.5 rounded-2xl mr-2">
+                                        <Bell size={22} color="white" />
+                                   </TouchableOpacity>
+                                   <TouchableOpacity 
+                                        className="bg-red-500/20 p-2.5 rounded-2xl"
+                                        onPress={() => logout()}
+                                   >
+                                        <LogOut size={22} color="white" />
+                                   </TouchableOpacity>
+                              </View>
                          </View>
 
                          {/* Quick Stats Grid */}
@@ -228,10 +237,10 @@ const OrderListItem = ({ order, onPress }: any) => (
                <View className="flex-row items-center mt-1">
                     <Text className="text-neutral-500 text-xs">{order.items.length} Items • {new Date(order.createdAt).toLocaleDateString()}</Text>
                     <View className={`ml-2 px-2 py-0.5 rounded-lg ${order.status === 'delivered' ? 'bg-green-100' :
-                              order.status === 'assigned' ? 'bg-blue-100' : 'bg-amber-100'
+                         order.status === 'assigned' ? 'bg-blue-100' : 'bg-amber-100'
                          }`}>
                          <Text className={`text-[10px] font-black uppercase ${order.status === 'delivered' ? 'text-green-700' :
-                                   order.status === 'assigned' ? 'text-blue-700' : 'text-amber-700'
+                              order.status === 'assigned' ? 'text-blue-700' : 'text-amber-700'
                               }`}>{order.status}</Text>
                     </View>
                </View>

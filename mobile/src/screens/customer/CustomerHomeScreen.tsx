@@ -14,7 +14,8 @@ import {
      Wrench,
      Sprout,
      ShoppingBag,
-     Plus
+     Plus,
+     LogOut
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,7 +32,7 @@ const CATEGORIES = [
 
 export const CustomerHomeScreen = () => {
      const navigation = useNavigation<any>();
-     const { user } = useAuth();
+     const { user, logout } = useAuth();
      const [featuredProducts, setFeaturedProducts] = useState([]);
 
      useEffect(() => {
@@ -63,11 +64,19 @@ export const CustomerHomeScreen = () => {
                                    <Text className="text-neutral-500 text-xs font-bold ml-1">Maharashtra Housing Board Pune</Text>
                               </TouchableOpacity>
                          </View>
-                         <View className="w-12 h-12 bg-white rounded-full items-center justify-center shadow-sm">
-                              <Image
-                                   source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&q=80' }}
-                                   className="w-10 h-10 rounded-full"
-                              />
+                         <View className="flex-row items-center">
+                              <View className="w-12 h-12 bg-white rounded-full items-center justify-center shadow-sm mr-3">
+                                   <Image
+                                        source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&q=80' }}
+                                        className="w-10 h-10 rounded-full"
+                                   />
+                              </View>
+                              <TouchableOpacity
+                                   className="bg-white p-2.5 rounded-2xl shadow-sm border border-neutral-100"
+                                   onPress={() => logout()}
+                              >
+                                   <LogOut size={22} color="#006B44" />
+                              </TouchableOpacity>
                          </View>
                     </View>
 

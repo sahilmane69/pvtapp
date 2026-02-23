@@ -12,7 +12,8 @@ import {
      Package,
      Bell,
      CheckCircle2,
-     List
+     List,
+     LogOut
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { API_URL } from '../../utils/constants';
@@ -21,7 +22,7 @@ const { width } = Dimensions.get('window');
 
 export const DeliveryHomeScreen = () => {
      const navigation = useNavigation<any>();
-     const { user } = useAuth();
+     const { user, logout } = useAuth();
      const [isOnline, setIsOnline] = useState(true);
      const [summary, setSummary] = useState({ earnings: 0, completedCount: 0 });
      const [activeTasks, setActiveTasks] = useState([]);
@@ -77,14 +78,22 @@ export const DeliveryHomeScreen = () => {
                               <Text className="text-blue-100 text-xs font-bold">Delivery Partner</Text>
                               <Text className="text-white text-xl font-black">{user?.username || 'Partner'}</Text>
                          </View>
-                         <View className="flex-row items-center bg-white/10 px-4 py-2 rounded-full">
-                              <Text className="text-white font-black text-xs mr-3">{isOnline ? 'ONLINE' : 'OFFLINE'}</Text>
-                              <Switch
-                                   value={isOnline}
-                                   onValueChange={setIsOnline}
-                                   trackColor={{ false: '#64748B', true: '#10B981' }}
-                                   thumbColor="white"
-                              />
+                         <View className="flex-row items-center">
+                              <View className="flex-row items-center bg-white/10 px-4 py-2 rounded-full mr-3">
+                                   <Text className="text-white font-black text-xs mr-3">{isOnline ? 'ONLINE' : 'OFFLINE'}</Text>
+                                   <Switch
+                                        value={isOnline}
+                                        onValueChange={setIsOnline}
+                                        trackColor={{ false: '#64748B', true: '#10B981' }}
+                                        thumbColor="white"
+                                   />
+                              </View>
+                              <TouchableOpacity
+                                   className="bg-red-500/20 p-2.5 rounded-2xl"
+                                   onPress={() => logout()}
+                              >
+                                   <LogOut size={20} color="white" />
+                              </TouchableOpacity>
                          </View>
                     </View>
                </SafeAreaView>
