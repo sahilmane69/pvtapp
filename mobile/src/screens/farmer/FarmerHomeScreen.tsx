@@ -12,9 +12,8 @@ const CATEGORIES = [
      { id: '5', name: 'Pesticides', icon: Package, image: 'https://images.unsplash.com/photo-1589923188900-85dae5233f71?w=400&q=80', slug: 'Pesticides' },
 ];
 
-const API_URL = 'http://192.168.0.101:5000';
-
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_URL } from '../../utils/constants';
 
 export const FarmerHomeScreen = () => {
      const navigation = useNavigation<any>();

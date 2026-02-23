@@ -30,6 +30,10 @@ const productSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    farmerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   {
     timestamps: true,

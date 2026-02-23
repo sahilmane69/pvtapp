@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Image, ScrollView, Animated, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Check, Truck, MapPin, Phone, ArrowLeft, Clock, Search } from 'lucide-react-native';
+import { useAuth } from '../../context/AuthContext';
 import io from 'socket.io-client';
+import { API_URL } from '../../utils/constants';
 
-const API_URL = 'http://192.168.0.101:5000';
-const SOCKET_URL = 'http://192.168.0.101:5000';
+const SOCKET_URL = API_URL;
 
 const STEPS = [
      { title: 'Order Placed', key: 'pending' },
@@ -27,11 +28,38 @@ export const TrackingScreen = () => {
      const route = useRoute<any>();
      const { orderId } = route.params || {};
 
+     const { userRole, user: authUser } = useAuth();
      const [order, setOrder] = useState<Order | null>(null);
      const [status, setStatus] = useState<OrderStatus>('pending'); // pending, assigned, out_for_delivery, delivered
      const [driverLocation, setDriverLocation] = useState<{ lat: number, lng: number } | null>(null);
      const [eta, setEta] = useState<number>(15);
      const [socket, setSocket] = useState<any>(null); // Suppressing 'any' for socket as types can be complex
+     const [isSubmitting, setIsSubmitting] = useState(false);
+
+     const handleMarkDelivered = async () => {
+          setIsSubmitting(true);
+          try {
+               const response = await fetch(`${API_URL}/orders/${orderId}/complete`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ deliveryPartnerId: authUser?.id })
+               });
+
+               if (response.ok) {
+                    setStatus('delivered');
+                    Alert.alert('Success', 'Order marked as delivered!');
+                    if (socket) socket.emit('update_status', { orderId, status: 'delivered' });
+               } else {
+                    const data = await response.json();
+                    Alert.alert('Error', data.message || 'Failed to update status');
+               }
+          } catch (error) {
+               console.error(error);
+               Alert.alert('Error', 'Connection failed');
+          } finally {
+               setIsSubmitting(false);
+          }
+     };
 
      // Animation for searching
      const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -189,6 +217,20 @@ export const TrackingScreen = () => {
                                         <Phone color="white" size={20} />
                                    </TouchableOpacity>
                               </View>
+
+                              {userRole === 'DELIVERY' && status === 'assigned' && (
+                                   <TouchableOpacity
+                                        className={`bg-primary-branding/90 py-4 rounded-2xl items-center mb-6 shadow-md ${isSubmitting ? 'opacity-50' : ''}`}
+                                        onPress={handleMarkDelivered}
+                                        disabled={isSubmitting}
+                                   >
+                                        {isSubmitting ? (
+                                             <ActivityIndicator color="white" />
+                                        ) : (
+                                             <Text className="text-white font-black uppercase italic tracking-widest">Mark as Delivered</Text>
+                                        )}
+                                   </TouchableOpacity>
+                              )}
 
                               {/* Timeline */}
                               <ScrollView showsVerticalScrollIndicator={false}>

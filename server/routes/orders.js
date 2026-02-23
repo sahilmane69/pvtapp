@@ -51,6 +51,18 @@ router.get("/farmer/:farmerId", async (req, res) => {
   }
 });
 
+// Get orders for a specific customer
+router.get("/customer/:customerId", async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const orders = await Order.find({ customerId }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    console.error("Error fetching customer orders:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Get pending orders for delivery
 router.get("/delivery", async (req, res) => {
   try {

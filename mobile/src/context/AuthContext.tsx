@@ -1,7 +1,9 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-type UserRole = 'FARMER' | 'DELIVERY' | 'ADMIN' | null;
+console.log('--- AuthContext Module Loaded ---');
+
+type UserRole = 'CUSTOMER' | 'FARMER' | 'DELIVERY' | 'ADMIN' | null;
 
 export interface AuthUser {
      id: string;
@@ -36,8 +38,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     }
 
                     if (storedUser) {
-                         const parsed: AuthUser = JSON.parse(storedUser);
-                         setUserState(parsed);
+                         try {
+                              const parsed: AuthUser = JSON.parse(storedUser);
+                              setUserState(parsed);
+                              console.log('Loaded auth user:', parsed.username);
+                         } catch (e) {
+                              console.error('Error parsing stored user:', e);
+                              await AsyncStorage.removeItem('authUser');
+                         }
                     }
                } catch (error) {
                     console.error('Failed to load auth state:', error);

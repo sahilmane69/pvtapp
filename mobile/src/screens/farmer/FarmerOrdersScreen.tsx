@@ -3,8 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, RefreshControl, Image, Activity
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { Package, Truck, ChevronRight, Clock, MapPin } from 'lucide-react-native';
-
-const API_URL = 'http://192.168.0.101:5000';
+import { API_URL } from '../../utils/constants';
 
 export const FarmerOrdersScreen = () => {
      const { user } = useAuth();
@@ -46,7 +45,7 @@ export const FarmerOrdersScreen = () => {
                <View className="flex-row justify-between items-start mb-3">
                     <View className="flex-row items-center space-x-2">
                          <View className={`p-2 rounded-full ${item.status === 'delivered' ? 'bg-green-100' :
-                                   item.status === 'assigned' ? 'bg-orange-100' : 'bg-blue-100'
+                              item.status === 'assigned' ? 'bg-orange-100' : 'bg-blue-100'
                               }`}>
                               <Package size={20} color={
                                    item.status === 'delivered' ? '#166534' :
@@ -61,10 +60,10 @@ export const FarmerOrdersScreen = () => {
                          </View>
                     </View>
                     <View className={`px-3 py-1 rounded-full ${item.status === 'delivered' ? 'bg-green-100' :
-                              item.status === 'assigned' ? 'bg-orange-100' : 'bg-blue-100'
+                         item.status === 'assigned' ? 'bg-orange-100' : 'bg-blue-100'
                          }`}>
                          <Text className={`font-semibold text-xs ${item.status === 'delivered' ? 'text-green-700' :
-                                   item.status === 'assigned' ? 'text-orange-700' : 'text-blue-700'
+                              item.status === 'assigned' ? 'text-orange-700' : 'text-blue-700'
                               }`}>
                               {item.status.toUpperCase()}
                          </Text>

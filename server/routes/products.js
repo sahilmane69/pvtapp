@@ -5,8 +5,11 @@ const router = express.Router();
 
 // Get all products
 router.get("/", async (req, res) => {
+  console.log("GET /products request received");
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const { farmerId } = req.query;
+    const filter = farmerId ? { farmerId } : {};
+    const products = await Product.find(filter).sort({ createdAt: -1 });
     res.json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -17,7 +20,7 @@ router.get("/", async (req, res) => {
 // Create a new product
 router.post("/", async (req, res) => {
   try {
-    const { name, category, price, quantityAvailable } = req.body;
+    const { name, category, price, quantityAvailable, farmerId } = req.body;
 
     if (!name || !category || price == null || quantityAvailable == null) {
       return res
@@ -30,6 +33,7 @@ router.post("/", async (req, res) => {
       category,
       price,
       quantityAvailable,
+      farmerId
     });
 
     const saved = await product.save();

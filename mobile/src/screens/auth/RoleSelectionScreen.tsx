@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, Image, Dimensions } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { Tractor, Truck } from 'lucide-react-native';
+import { Tractor, Truck, ShoppingBag, ChevronRight } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_URL } from '../../utils/constants';
 
-const API_URL = 'http://192.168.0.101:5000';
+const { width } = Dimensions.get('window');
 
 export const RoleSelectionScreen = () => {
      const [selectedRole, setSelectedRole] = useState<string | null>(null);
      const { user, setUserRole, setUser } = useAuth();
 
-     const handleRoleSelect = async (role: 'FARMER' | 'DELIVERY') => {
+     const handleRoleSelect = async (role: 'FARMER' | 'DELIVERY' | 'CUSTOMER') => {
           if (!user?.id) {
                Alert.alert('Not logged in', 'Please log in again.');
                return;
@@ -23,18 +25,14 @@ export const RoleSelectionScreen = () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                          userId: user.id,
-                         role: role === 'FARMER' ? 'farmer' : 'delivery',
+                         role: role.toLowerCase(),
                     }),
                });
 
                const data = await response.json();
 
                if (response.ok) {
-                    await setUser({
-                         id: user.id,
-                         username: user.username,
-                         role,
-                    });
+                    await setUser({ id: user.id, username: user.username, role });
                     await setUserRole(role);
                } else {
                     Alert.alert('Error', data.message || 'Could not set role');
@@ -46,55 +44,66 @@ export const RoleSelectionScreen = () => {
      };
 
      return (
-          <View className="flex-1 justify-center items-center bg-stone-50 p-6">
-               <View className="mb-12 items-center">
-                    <Text className="text-3xl font-bold text-stone-800 mb-2">Welcome to Farmingo</Text>
-                    <Text className="text-stone-500 text-lg">Choose your role to continue</Text>
-               </View>
+          <View className="flex-1 bg-primary-light">
+               <SafeAreaView className="flex-1">
+                    <View className="flex-1 justify-center px-8">
+                         <View className="items-center mb-10">
+                              <Image
+                                   source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3588/3588616.png' }}
+                                   className="w-32 h-32 mb-6"
+                                   resizeMode="contain"
+                              />
+                              <Text className="text-primary-branding text-3xl font-black italic">CHOOSE YOUR PATH</Text>
+                              <Text className="text-neutral-500 font-medium mt-2">How would you like to use FarminGo?</Text>
+                         </View>
 
-               <View className="w-full space-y-6">
-                    <TouchableOpacity
-                         className={`p-6 rounded-2xl border-2 flex-row items-center space-x-4 ${selectedRole === 'FARMER'
-                                   ? 'bg-emerald-50 border-emerald-500 shadow-md'
-                                   : 'bg-white border-stone-100 shadow-sm'
-                              }`}
-                         onPress={() => handleRoleSelect('FARMER')}
-                         activeOpacity={0.7}
-                    >
-                         <View className={`p-3 rounded-full ${selectedRole === 'FARMER' ? 'bg-emerald-100' : 'bg-stone-100'}`}>
-                              <Tractor size={32} color={selectedRole === 'FARMER' ? '#059669' : '#78716c'} />
-                         </View>
-                         <View className="flex-1">
-                              <Text className={`text-xl font-bold ${selectedRole === 'FARMER' ? 'text-emerald-800' : 'text-stone-800'}`}>
-                                   Farmer
-                              </Text>
-                              <Text className="text-stone-500 mt-1">
-                                   I grow and sell produce
-                              </Text>
-                         </View>
-                    </TouchableOpacity>
+                         <View className="space-y-6">
+                              <RoleCard
+                                   title="Customer"
+                                   desc="I want to buy fresh seeds & tools"
+                                   icon={<ShoppingBag size={28} color="#006B44" />}
+                                   selected={selectedRole === 'CUSTOMER'}
+                                   onPress={() => handleRoleSelect('CUSTOMER')}
+                                   color="bg-white"
+                              />
 
-                    <TouchableOpacity
-                         className={`p-6 rounded-2xl border-2 flex-row items-center space-x-4 ${selectedRole === 'DELIVERY'
-                                   ? 'bg-orange-50 border-orange-500 shadow-md'
-                                   : 'bg-white border-stone-100 shadow-sm'
-                              }`}
-                         onPress={() => handleRoleSelect('DELIVERY')}
-                         activeOpacity={0.7}
-                    >
-                         <View className={`p-3 rounded-full ${selectedRole === 'DELIVERY' ? 'bg-orange-100' : 'bg-stone-100'}`}>
-                              <Truck size={32} color={selectedRole === 'DELIVERY' ? '#ea580c' : '#78716c'} />
+                              <RoleCard
+                                   title="Farmer"
+                                   desc="I want to sell my produce"
+                                   icon={<Tractor size={28} color="#006B44" />}
+                                   selected={selectedRole === 'FARMER'}
+                                   onPress={() => handleRoleSelect('FARMER')}
+                                   color="bg-white"
+                              />
+
+                              <RoleCard
+                                   title="Delivery Partner"
+                                   desc="I want to deliver and earn"
+                                   icon={<Truck size={28} color="#006B44" />}
+                                   selected={selectedRole === 'DELIVERY'}
+                                   onPress={() => handleRoleSelect('DELIVERY')}
+                                   color="bg-white"
+                              />
                          </View>
-                         <View className="flex-1">
-                              <Text className={`text-xl font-bold ${selectedRole === 'DELIVERY' ? 'text-orange-800' : 'text-stone-800'}`}>
-                                   Delivery Partner
-                              </Text>
-                              <Text className="text-stone-500 mt-1">
-                                   I deliver orders to customers
-                              </Text>
-                         </View>
-                    </TouchableOpacity>
-               </View>
+                    </View>
+               </SafeAreaView>
           </View>
      );
 };
+
+const RoleCard = ({ title, desc, icon, selected, onPress, color }: any) => (
+     <TouchableOpacity
+          className={`${color} p-6 rounded-3xl flex-row items-center border ${selected ? 'border-primary-branding border-2 shadow-premium' : 'border-neutral-100 shadow-card'}`}
+          onPress={onPress}
+          activeOpacity={0.9}
+     >
+          <View className={`p-4 rounded-2xl ${selected ? 'bg-primary-light' : 'bg-neutral-50'}`}>
+               {icon}
+          </View>
+          <View className="flex-1 ml-5">
+               <Text className={`text-xl font-black italic ${selected ? 'text-primary-branding' : 'text-neutral-900'}`}>{title}</Text>
+               <Text className="text-neutral-500 text-xs font-medium mt-1">{desc}</Text>
+          </View>
+          <ChevronRight size={20} color={selected ? "#006B44" : "#94A3B8"} />
+     </TouchableOpacity>
+);

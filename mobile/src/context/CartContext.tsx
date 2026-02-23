@@ -20,6 +20,7 @@ interface CartContextType {
      cartItems: CartItem[];
      addToCart: (product: Product) => void;
      removeFromCart: (productId: string) => void;
+     updateQuantity: (productId: string, quantity: number) => void;
      getCartTotal: () => number;
      clearCart: () => void;
 }
@@ -31,21 +32,36 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
      const addToCart = (product: Product) => {
           setCartItems((prevItems) => {
-               const existingItem = prevItems.find((item) => item.id === product.id);
+               const itemId = product.id || product._id;
+               const existingItem = prevItems.find((item) => (item.id || item._id) === itemId);
                if (existingItem) {
                     return prevItems.map((item) =>
-                         item.id === product.id
+                         (item.id || item._id) === itemId
                               ? { ...item, quantity: item.quantity + 1 }
                               : item
                     );
                }
-               return [...prevItems, { ...product, quantity: 1 }];
+               return [...prevItems, { ...product, id: itemId as string, quantity: 1 }];
           });
      };
 
      const removeFromCart = (productId: string) => {
           setCartItems((prevItems) =>
-               prevItems.filter((item) => item.id !== productId)
+               prevItems.filter((item) => (item.id || item._id) !== productId)
+          );
+     };
+
+     const updateQuantity = (productId: string, quantity: number) => {
+          if (quantity <= 0) {
+               removeFromCart(productId);
+               return;
+          }
+          setCartItems((prevItems) =>
+               prevItems.map((item) =>
+                    (item.id || item._id) === productId
+                         ? { ...item, quantity }
+                         : item
+               )
           );
      };
 
@@ -58,7 +74,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
      };
 
      return (
-          <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, getCartTotal, clearCart }}>
+          <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, getCartTotal, clearCart }}>
                {children}
           </CartContext.Provider>
      );

@@ -3,8 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshContr
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const API_URL = 'http://192.168.0.101:5000';
+import { API_URL } from '../../utils/constants';
 
 interface Product {
      _id: string; // MongoDB uses _id

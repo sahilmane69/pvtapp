@@ -8,12 +8,19 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Package, Plus, Trash2, ChevronLeft, LayoutDashboard, Tag, IndianRupee, Layers } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import { API_URL } from '../../utils/constants';
+import { useAuth } from '../../context/AuthContext';
 
-const API_URL = 'http://192.168.0.101:5000';
+const { width } = Dimensions.get('window');
 
 interface Product {
   id: string;
+  _id?: string;
   name: string;
   category: string;
   price: number;
@@ -21,6 +28,8 @@ interface Product {
 }
 
 export const AddProductScreen = () => {
+  const { user } = useAuth();
+  const navigation = useNavigation<any>();
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [price, setPrice] = useState('');
@@ -32,12 +41,12 @@ export const AddProductScreen = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(`${API_URL}/products`);
+      const res = await fetch(`${API_URL}/products?farmerId=${user?.id}`);
       const data = await res.json();
       setProducts(data);
     } catch (error) {
       console.error('Failed to fetch products', error);
-      Alert.alert('Error', 'Could not load products from server');
+      Alert.alert('Error', 'Could not load products');
     } finally {
       setIsLoading(false);
       setRefreshing(false);
@@ -46,19 +55,11 @@ export const AddProductScreen = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [user?.id]);
 
   const handleAddProduct = async () => {
     if (!name.trim() || !category.trim() || !price.trim() || !quantity.trim()) {
-      Alert.alert('Missing fields', 'Please fill all fields');
-      return;
-    }
-
-    const numericPrice = Number(price);
-    const numericQty = Number(quantity);
-
-    if (isNaN(numericPrice) || isNaN(numericQty)) {
-      Alert.alert('Invalid input', 'Price and quantity must be numbers');
+      Alert.alert('Incomplete Form', 'Please fill in all product details');
       return;
     }
 
@@ -70,146 +71,123 @@ export const AddProductScreen = () => {
         body: JSON.stringify({
           name: name.trim(),
           category: category.trim(),
-          price: numericPrice,
-          quantityAvailable: numericQty,
+          price: Number(price),
+          quantityAvailable: Number(quantity),
+          farmerId: user?.id,
+          image: 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=400&q=80' // Default placeholder
         }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        Alert.alert('Success', 'Product added');
+        Alert.alert('Success', 'Product listed successfully');
         setName('');
         setCategory('');
         setPrice('');
         setQuantity('');
-        setProducts((prev) => [data.product, ...prev]);
+        fetchProducts();
       } else {
         Alert.alert('Error', data.message || 'Failed to add product');
       }
     } catch (error) {
-      console.error('Failed to add product', error);
-      Alert.alert('Error', 'Could not connect to server');
+      Alert.alert('Error', 'Connection failed');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    Alert.alert('Delete product', 'Are you sure you want to delete this product?', [
+  const handleDeleteProduct = (id: string) => {
+    Alert.alert('Remove Listing', 'Are you sure you want to remove this product?', [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Delete',
+        text: 'Remove',
         style: 'destructive',
         onPress: async () => {
           try {
-            const res = await fetch(`${API_URL}/products/${id}`, {
-              method: 'DELETE',
-            });
-            const data = await res.json();
-
+            const res = await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
             if (res.ok) {
-              setProducts((prev) => prev.filter((p) => p.id !== id));
-            } else {
-              Alert.alert('Error', data.message || 'Failed to delete product');
+              setProducts(prev => prev.filter(p => (p.id || p._id) !== id));
             }
-          } catch (error) {
-            console.error('Failed to delete product', error);
-            Alert.alert('Error', 'Could not connect to server');
-          }
+          } catch (e) { Alert.alert('Error', 'Delete failed'); }
         },
       },
     ]);
   };
 
   return (
-    <View className="flex-1 bg-stone-50 p-4">
-      <Text className="text-2xl font-bold text-stone-800 mb-4">Admin Product Panel</Text>
+    <View className="flex-1 bg-stone-50">
+      <SafeAreaView edges={['top']} className="bg-white shadow-sm">
+        <View className="px-6 py-4 flex-row items-center justify-between">
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <ChevronLeft size={24} color="#44403C" />
+          </TouchableOpacity>
+          <Text className="text-emerald-900 text-xl font-black italic">PRODUCT MANAGER</Text>
+          <View className="w-6" />
+        </View>
+      </SafeAreaView>
 
-      <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-stone-100">
-        <Text className="text-stone-600 font-semibold mb-2">Add new product</Text>
+      <FlatList
+        data={products}
+        keyExtractor={(item) => (item.id || item._id || Math.random().toString())}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchProducts()} />}
+        ListHeaderComponent={
+          <View className="p-6">
+            <View className="bg-white p-6 rounded-[32px] shadow-card border border-neutral-100 mb-8">
+              <Text className="text-neutral-900 text-lg font-black mb-6 italic uppercase">List New Product</Text>
 
-        <TextInput
-          className="bg-stone-50 rounded-xl px-3 py-2 mb-2 border border-stone-200"
-          placeholder="Name"
-          value={name}
-          onChangeText={setName}
-        />
-        <TextInput
-          className="bg-stone-50 rounded-xl px-3 py-2 mb-2 border border-stone-200"
-          placeholder="Category"
-          value={category}
-          onChangeText={setCategory}
-        />
-        <TextInput
-          className="bg-stone-50 rounded-xl px-3 py-2 mb-2 border border-stone-200"
-          placeholder="Price"
-          keyboardType="numeric"
-          value={price}
-          onChangeText={setPrice}
-        />
-        <TextInput
-          className="bg-stone-50 rounded-xl px-3 py-2 mb-3 border border-stone-200"
-          placeholder="Quantity available"
-          keyboardType="numeric"
-          value={quantity}
-          onChangeText={setQuantity}
-        />
+              <InputField icon={<Tag size={18} color="#059669" />} placeholder="Product Name (e.g. Fresh Tomatoes)" value={name} onChange={setName} />
+              <InputField icon={<Layers size={18} color="#059669" />} placeholder="Category" value={category} onChange={setCategory} />
+              <InputField icon={<IndianRupee size={18} color="#059669" />} placeholder="Price per unit" value={price} onChange={setPrice} keyboardType="numeric" />
+              <InputField icon={<Package size={18} color="#059669" />} placeholder="Stock Quantity" value={quantity} onChange={setQuantity} keyboardType="numeric" />
 
-        <TouchableOpacity
-          className={`w-full py-3 rounded-xl items-center ${
-            isSubmitting ? 'bg-stone-300' : 'bg-emerald-600'
-          }`}
-          onPress={handleAddProduct}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white font-bold">Add Product</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+              <TouchableOpacity
+                className={`bg-emerald-700 py-4 rounded-2xl items-center shadow-md mt-4 ${isSubmitting ? 'opacity-50' : ''}`}
+                onPress={handleAddProduct}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? <ActivityIndicator color="white" /> : <Text className="text-white font-black uppercase italic tracking-widest">Publish Listing</Text>}
+              </TouchableOpacity>
+            </View>
 
-      <View className="flex-1">
-        <Text className="text-stone-600 font-semibold mb-2">Existing products</Text>
-        {isLoading ? (
-          <View className="flex-1 justify-center items-center">
-            <ActivityIndicator size="large" color="#22c55e" />
+            <Text className="text-neutral-900 text-lg font-black mb-4 italic uppercase">Your Active Listings</Text>
           </View>
-        ) : (
-          <FlatList
-            data={products}
-            keyExtractor={(item) => item.id}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={() => {
-                  setRefreshing(true);
-                  fetchProducts();
-                }}
-              />
-            }
-            renderItem={({ item }) => (
-              <View className="bg-white p-4 mb-2 rounded-xl flex-row justify-between items-center border border-stone-100">
-                <View>
-                  <Text className="font-semibold text-stone-800">{item.name}</Text>
-                  <Text className="text-sm text-stone-500">{item.category}</Text>
-                  <Text className="text-sm text-emerald-700 font-bold">
-                    ₹{item.price.toFixed(2)} · {item.quantityAvailable} units
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  className="px-3 py-2 rounded-lg bg-red-500"
-                  onPress={() => handleDeleteProduct(item.id)}
-                >
-                  <Text className="text-white font-semibold text-sm">Delete</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          />
+        }
+        renderItem={({ item }) => (
+          <View className="mx-6 bg-white p-4 rounded-3xl mb-4 flex-row items-center shadow-sm border border-neutral-100">
+            <View className="bg-neutral-50 p-3 rounded-2xl mr-4">
+              <Package size={24} color="#059669" />
+            </View>
+            <View className="flex-1">
+              <Text className="font-black text-neutral-900 text-base italic" numberOfLines={1}>{item.name}</Text>
+              <Text className="text-neutral-400 text-[10px] font-bold uppercase">{item.category}</Text>
+              <Text className="text-emerald-700 font-black text-sm mt-1">₹{item.price} • {item.quantityAvailable} in stock</Text>
+            </View>
+            <TouchableOpacity
+              className="bg-red-50 p-3 rounded-2xl"
+              onPress={() => handleDeleteProduct(item.id || item._id || '')}
+            >
+              <Trash2 size={20} color="#EF4444" />
+            </TouchableOpacity>
+          </View>
         )}
-      </View>
+        ListEmptyComponent={
+          !isLoading ? (
+            <View className="items-center py-10">
+              <LayoutDashboard size={48} color="#D1D5DB" strokeWidth={1} />
+              <Text className="text-neutral-400 font-medium mt-4">No products listed yet.</Text>
+            </View>
+          ) : null
+        }
+        ListFooterComponent={<View className="h-20" />}
+      />
     </View>
   );
 };
+
+const InputField = ({ icon, ...props }: any) => (
+  <View className="flex-row items-center bg-stone-50 rounded-2xl px-4 py-3 mb-4 border border-stone-100">
+    <View className="mr-3">{icon}</View>
+    <TextInput className="flex-1 text-neutral-900 font-bold" placeholderTextColor="#94A3B8" {...props} />
+  </View>
+);

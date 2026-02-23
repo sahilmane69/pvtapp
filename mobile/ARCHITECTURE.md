@@ -1,64 +1,43 @@
-# Scalable React Native Architecture Design
+# FarminGo App Architecture & Implementation Overview
 
-## Overview
+## 1. App Architecture
+FarminGo is built using **React Native (Expo)** with a focus on high performance and modularity.
+- **Frontend**: React Native, NativeWind (Tailwind CSS), Zustand (State Management), React Navigation.
+- **Backend**: Node.js, Express, MongoDB, Socket.io (Real-time tracking).
+- **Communication**: REST API for transactional data, WebSockets for live delivery updates.
 
-This architecture is designed to handle distinct user roles (Farmer/Delivery) with clear boundaries, scalable state management, and a robust navigation strategy. It leverages modern React Native practices and tools.
+## 2. Data Models
+### User
+- `id`, `username`, `password`, `role` (CUSTOMER, FARMER, DELIVERY, ADMIN).
+### Product
+- `id`, `name`, `price`, `category`, `image`, `farmerId` (Ownership).
+### Order
+- `id`, `customerId`, `farmerId`, `items`, `status` (pending, assigned, delivered), `totalAmount`, `deliveryLocation`.
 
-## Core Structure
+## 3. Role-Based Navigation Logic
+The app uses a conditional root navigator based on the `userRole` state from `AuthContext`.
+- **Unauthorized**: `AuthStack` (Login/Register/Splash).
+- **Customer**: `CustomerTabStack` (Home/Browse, Cart, Category, My Orders).
+- **Farmer**: `FarmerTabStack` (Dashboard/Sales, Inventory, Orders).
+- **Delivery**: `DeliveryStack` (Online/Offline, Task List, Active Map).
 
-We follow a **Feature-based structure** (also known as Domain-Driven Design layout) rather than organizing files by type (e.g., all components in one folder). This ensures scalability as the app grows.
+## 4. Location Handling Flow (Priority Implementation)
+Location is handled by a centralized `useLocationStore` (Zustand).
+1. **Trigger**: Location is requested instantly upon successful login.
+2. **Permission**: Requests `foregroundPermissions`.
+3. **Caching**: Coordinates are stored in the state for immediate access across screens.
+4. **Fallback**: If permission is denied or fails, it defaults to pre-defined coordinates (e.g., Pune center) to ensure the UI never blocks.
+5. **Efficiency**: Reverse geocoding (address lookup) is performed once and cached.
 
-```
-src/
-├── app/                    # Global app configuration (providers, theme, navigation entry)
-├── assets/                 # Images, fonts, and static resources
-├── features/               # Domain-specific logic
-│   ├── auth/               # Authentication (Login, Register, OTP)
-│   ├── farmer/             # Farmer-specific screens (Dashboard, Crop Management)
-│   ├── delivery/           # Delivery-specific screens (route, Tasks)
-│   └── shared/             # Shared components and hooks used across roles
-├── components/             # Global generic UI components (Buttons, Inputs, Cards)
-├── navigation/             # Navigation stacks and navigators
-├── services/               # API clients (Axios, Supabase, Firebase)
-├── store/                  # Global state management (Zustand/Redux)
-├── utils/                  # Helper functions and constants
-└── types/                  # Global TypeScript definitions
-```
+## 5. Performance Optimization Approach
+- **Instant Login**: User role and basic profile are cached in `AsyncStorage`.
+- **Skeleton Loaders**: Premium designs use loading states to prevent "jumping" UI.
+- **Asset Optimization**: High-quality imagery from Unsplash with specific width parameters for faster loading.
+- **Tailwind Pre-compilation**: NativeWind ensures styling logic happens before runtime where possible.
+- **Safe Parsing**: All JSON parsing from external storage or network is wrapped in try-catch with graceful fallbacks.
 
-## Role Separation Strategy
-
-### 1. Navigation Flow
-
-The navigation structure is the primary enforcement point for role separation. It uses a `RootNavigator` that conditionally renders the appropriate stack based on the user's role and authentication status.
-
-- **RootNavigator**: Checks `isAuthenticated` and `userRole`.
-  - If `!isAuthenticated` -> Render **AuthStack**
-  - If `userRole === 'FARMER'` -> Render **FarmerStack**
-  - If `userRole === 'DELIVERY'` -> Render **DeliveryStack**
-
-This ensures a Delivery user literally cannot define routes to Farmer screens, and vice-versa, preventing accidental access and simplifying deep linking logic.
-
-### 2. Feature Isolation
-
-Code for specific roles lives in `src/features/farmer` and `src/features/delivery`. Shared functionality (like Profile or Settings) lives in `src/features/shared` or is composed of reusable `components/`.
-
-### 3. State Management
-
-We use **Zustand** for lightweight global state (User Session, Theme).
-For complex data caching and server state synchronization, we use **React Query (TanStack Query)**. This separates "UI State" from "Server State".
-
-## Tech Stack Recommendation
-
-- **Framework**: Expo (Managed Workflow) for rapid development and OTA updates.
-- **Language**: TypeScript (Strict Mode).
-- **Navigation**: React Navigation v6/v7.
-- **Styling**: NativeWind (Tailwind CSS for React Native) for consistent styling.
-- **State**: Zustand + React Query.
-- **Forms**: React Hook Form + Zod validation.
-
-## Implementation Plan
-
-1.  Initialize Expo project with TypeScript.
-2.  Install NativeWind and Navigation dependencies.
-3.  Create the folder structure.
-4.  Implement `useAuth` hook and Navigation setup.
+## 6. Real-time Order Flow
+- **Customer**: Creates order -> Emits via REST -> Notifies Farmer.
+- **Farmer**: Receives "Pending" order in Dashboard -> Prepares.
+- **Delivery**: "Pending" orders appear in list -> Accept -> Status changes to "Assigned" -> Notifies Customer/Farmer via Socket.io.
+- **Completion**: Mark as "Delivered" -> Moves to history -> Triggers earnings update for Farmer and Partner.

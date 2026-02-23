@@ -6,9 +6,8 @@ import { useCart } from '../../context/CartContext';
 import { CreditCard, Wallet, Banknote, ArrowLeft, Lock, MapPin } from 'lucide-react-native';
 import * as Location from 'expo-location';
 
-const API_URL = 'http://192.168.0.101:5000';
-
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_URL } from '../../utils/constants';
 
 export const PaymentScreen = () => {
      const navigation = useNavigation<any>();

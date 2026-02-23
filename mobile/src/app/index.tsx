@@ -7,6 +7,7 @@ import { CartProvider } from '../context/CartContext';
 import { AuthProvider } from '../context/AuthContext';
 
 export default function AppIndex() {
+     console.log('--- AppIndex Mounting ---');
      return (
           <SafeAreaProvider>
                <AuthProvider>

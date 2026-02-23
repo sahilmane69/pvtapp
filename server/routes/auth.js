@@ -21,6 +21,7 @@ async function ensureAdminSeeded() {
 
 // Register normal user
 router.post("/register", async (req, res) => {
+  console.log("POST /auth/register - Body:", req.body);
   try {
     const { username, password, phone } = req.body;
 
@@ -100,7 +101,7 @@ router.post("/set-role", async (req, res) => {
   try {
     const { userId, role } = req.body;
 
-    if (!userId || !["farmer", "delivery"].includes(role)) {
+    if (!userId || !["farmer", "delivery", "customer"].includes(role)) {
       return res.status(400).json({ message: "Invalid user or role" });
     }
 

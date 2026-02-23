@@ -1,4 +1,5 @@
 import { registerRootComponent } from 'expo';
+console.log('--- MOBILE APP STARTING ---');
 
 import App from './App';
 

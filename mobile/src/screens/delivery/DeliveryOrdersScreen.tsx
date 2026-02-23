@@ -1,110 +1,133 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-
-const API_URL = 'http://192.168.0.101:5000';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
+import { API_URL } from '../../utils/constants';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Package, MapPin, ChevronLeft, Search, CheckCircle2 } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 
 export const DeliveryOrdersScreen = () => {
+     const { user } = useAuth();
+     const navigation = useNavigation<any>();
      const [orders, setOrders] = useState<any[]>([]);
      const [isLoading, setIsLoading] = useState(true);
-
-     useEffect(() => {
-          fetchOrders();
-     }, []);
+     const [refreshing, setRefreshing] = useState(false);
 
      const fetchOrders = async () => {
           try {
                const response = await fetch(`${API_URL}/orders/delivery`);
                const data = await response.json();
-               setOrders(data);
+               if (response.ok) {
+                    setOrders(data);
+               }
           } catch (error) {
-               console.error(error);
-               Alert.alert('Error', 'Failed to fetch orders');
+               console.error('Fetch pending orders error:', error);
           } finally {
                setIsLoading(false);
+               setRefreshing(false);
           }
      };
 
-     const handleAcceptOrder = async (orderId: string) => {
-          setIsLoading(true);
-          try {
-               // Assuming a dummy delivery partner ID for now since we don't have user ID in AuthContext yet
-               const dummyPartnerId = '65cb8f8d6e9f1a0012349999';
+     useEffect(() => {
+          fetchOrders();
+     }, []);
 
+     const onRefresh = () => {
+          setRefreshing(true);
+          fetchOrders();
+     };
+
+     const handleAcceptOrder = async (orderId: string) => {
+          try {
                const response = await fetch(`${API_URL}/orders/${orderId}/accept`, {
                     method: 'PATCH',
-                    headers: {
-                         'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                         deliveryPartnerId: dummyPartnerId
-                    }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ deliveryPartnerId: user?.id }),
                });
 
                const data = await response.json();
 
                if (response.ok) {
-                    Alert.alert('Success', 'You have accepted the order!');
-                    // Remove the accepted order from the local list
-                    setOrders(prev => prev.filter(order => order._id !== orderId));
+                    Alert.alert('Accepted', 'Order assigned to you!', [
+                         { text: 'Go to Map', onPress: () => navigation.navigate('DeliveryHome') }
+                    ]);
+                    setOrders(prev => prev.filter(o => o._id !== orderId));
                } else {
-                    Alert.alert('Error', data.message || 'Failed to accept order');
+                    Alert.alert('Error', data.message || 'Could not accept order');
                }
           } catch (error) {
-               console.error(error);
-               Alert.alert('Error', 'Could not connect to server');
-          } finally {
-               setIsLoading(false);
+               Alert.alert('Error', 'Connection failed');
           }
      };
 
-     if (isLoading) {
+     if (isLoading && !refreshing) {
           return (
-               <View className="flex-1 justify-center items-center">
-                    <ActivityIndicator size="large" color="#0000ff" />
+               <View className="flex-1 justify-center items-center bg-white">
+                    <ActivityIndicator size="large" color="#2563EB" />
                </View>
           );
      }
 
      return (
-          <View className="flex-1 bg-gray-50 p-4">
-               <Text className="text-2xl font-bold text-gray-800 mb-4">Pending Orders</Text>
-
-               {orders.length === 0 ? (
-                    <View className="flex-1 justify-center items-center">
-                         <Text className="text-gray-500 text-lg">No pending orders available.</Text>
+          <View className="flex-1 bg-neutral-50">
+               <SafeAreaView edges={['top']} className="bg-white shadow-sm">
+                    <View className="px-6 py-4 flex-row items-center justify-between">
+                         <TouchableOpacity onPress={() => navigation.goBack()}>
+                              <ChevronLeft size={24} color="#1E293B" />
+                         </TouchableOpacity>
+                         <Text className="text-neutral-900 text-xl font-black italic">PENDING TASKS</Text>
+                         <TouchableOpacity>
+                              <Search size={24} color="#1E293B" />
+                         </TouchableOpacity>
                     </View>
-               ) : (
-                    <FlatList
-                         data={orders}
-                         keyExtractor={(item) => item._id}
-                         renderItem={({ item }) => (
-                              <View className="bg-white p-4 mb-4 rounded-xl shadow-sm border border-gray-100">
-                                   <View className="flex-row justify-between items-center mb-2">
-                                        <Text className="font-bold text-lg text-gray-800">
-                                             Order #{item._id.slice(-6).toUpperCase()}
+               </SafeAreaView>
+
+               <FlatList
+                    data={orders}
+                    keyExtractor={(item) => item._id}
+                    contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2563EB']} />}
+                    ListEmptyComponent={
+                         <View className="items-center justify-center mt-20">
+                              <CheckCircle2 size={64} color="#D1D5DB" strokeWidth={1} />
+                              <Text className="text-neutral-400 font-bold text-center mt-4">No pending orders found{'\n'}Check back later!</Text>
+                         </View>
+                    }
+                    renderItem={({ item }) => (
+                         <View className="bg-white p-6 mb-5 rounded-[32px] shadow-card border border-neutral-100">
+                              <View className="flex-row justify-between items-center mb-4">
+                                   <View className="bg-blue-50 px-3 py-1 rounded-full">
+                                        <Text className="text-blue-700 font-black text-[10px] uppercase">₹{item.totalAmount} • {item.items.length} Items</Text>
+                                   </View>
+                                   <Text className="text-neutral-400 font-bold text-[10px]">#{item._id.slice(-6).toUpperCase()}</Text>
+                              </View>
+
+                              <View className="flex-row items-center mb-6">
+                                   <View className="bg-blue-600 p-4 rounded-2xl mr-4">
+                                        <Package size={24} color="white" />
+                                   </View>
+                                   <View className="flex-1">
+                                        <Text className="text-neutral-900 font-black text-lg leading-tight" numberOfLines={1}>
+                                             Pickup: {item.farmerId?.username || 'Local Farm'}
                                         </Text>
-                                        <View className="bg-yellow-100 px-2 py-1 rounded">
-                                             <Text className="text-yellow-800 text-xs font-bold uppercase">{item.status}</Text>
+                                        <View className="flex-row items-center mt-1">
+                                             <MapPin size={12} color="#64748B" />
+                                             <Text className="text-neutral-500 text-xs ml-1" numberOfLines={1}>
+                                                  {item.deliveryAddress || 'Detecting address...'}
+                                             </Text>
                                         </View>
                                    </View>
-
-                                   <Text className="text-gray-600 mb-2">
-                                        Items: <Text className="font-bold">{item.items.length}</Text>
-                                   </Text>
-                                   <Text className="text-gray-600 mb-4">
-                                        Total: <Text className="font-bold text-green-700">₹{item.totalAmount?.toFixed(2)}</Text>
-                                   </Text>
-
-                                   <TouchableOpacity
-                                        className="bg-blue-600 py-3 rounded-lg items-center active:bg-blue-700"
-                                        onPress={() => handleAcceptOrder(item._id)}
-                                   >
-                                        <Text className="text-white font-bold">Accept Order</Text>
-                                   </TouchableOpacity>
                               </View>
-                         )}
-                    />
-               )}
+
+                              <TouchableOpacity
+                                   className="bg-blue-700 py-4 rounded-2xl items-center shadow-md active:bg-blue-800"
+                                   onPress={() => handleAcceptOrder(item._id)}
+                              >
+                                   <Text className="text-white font-black uppercase tracking-widest italic">Accept Request</Text>
+                              </TouchableOpacity>
+                         </View>
+                    )}
+               />
           </View>
      );
 };
