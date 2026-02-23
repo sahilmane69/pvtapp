@@ -1,38 +1,41 @@
-import React, { useEffect, useState } from 'react';
-console.log('--- RootNavigator Module Loaded ---');
-import { NavigationContainer } from '@react-navigation/native';
+import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { AuthStack } from './AuthStack';
 import { FarmerStack } from './FarmerStack';
 import { DeliveryStack } from './DeliveryStack';
 import { AdminStack } from './AdminStack';
 import { CustomerStack } from './CustomerStack';
-import { ActivityIndicator, View } from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+import { View, ActivityIndicator } from 'react-native';
+const RootStack = createNativeStackNavigator();
+
+// Inline loading component — kept simple, no extra deps
+const LoadingScreen = () => (
+     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#E2F2E9' }}>
+          <ActivityIndicator size="large" color="#006B44" />
+     </View>
+);
 
 export const RootNavigator = () => {
      const { userRole, isLoading } = useAuth();
 
-     if (isLoading) {
-          return (
-               <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color="#006B44" />
-               </View>
-          );
-     }
+     // Show minimal loading while AsyncStorage resolves — usually < 100ms
+     if (isLoading) return <LoadingScreen />;
 
      return (
-          <NavigationContainer>
+          <RootStack.Navigator screenOptions={{ headerShown: false }}>
                {userRole === 'CUSTOMER' ? (
-                    <CustomerStack />
+                    <RootStack.Screen name="CustomerRoot" component={CustomerStack} />
                ) : userRole === 'FARMER' ? (
-                    <FarmerStack />
+                    <RootStack.Screen name="FarmerRoot" component={FarmerStack} />
                ) : userRole === 'DELIVERY' ? (
-                    <DeliveryStack />
+                    <RootStack.Screen name="DeliveryRoot" component={DeliveryStack} />
                ) : userRole === 'ADMIN' ? (
-                    <AdminStack />
+                    <RootStack.Screen name="AdminRoot" component={AdminStack} />
                ) : (
-                    <AuthStack />
+                    <RootStack.Screen name="AuthRoot" component={AuthStack} />
                )}
-          </NavigationContainer>
+          </RootStack.Navigator>
      );
 };

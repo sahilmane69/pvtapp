@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../utils/constants';
@@ -13,52 +13,46 @@ export const DeliveryOrdersScreen = () => {
      const [isLoading, setIsLoading] = useState(true);
      const [refreshing, setRefreshing] = useState(false);
 
-     const fetchOrders = async () => {
+     const fetchOrders = useCallback(async () => {
           try {
                const response = await fetch(`${API_URL}/orders/delivery`);
                const data = await response.json();
-               if (response.ok) {
-                    setOrders(data);
-               }
-          } catch (error) {
-               console.error('Fetch pending orders error:', error);
+               if (response.ok) setOrders(data);
+          } catch {
+               // Keep showing existing data
           } finally {
                setIsLoading(false);
                setRefreshing(false);
           }
-     };
-
-     useEffect(() => {
-          fetchOrders();
      }, []);
 
-     const onRefresh = () => {
+     useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+     const onRefresh = useCallback(() => {
           setRefreshing(true);
           fetchOrders();
-     };
+     }, [fetchOrders]);
 
-     const handleAcceptOrder = async (orderId: string) => {
+     const handleAcceptOrder = useCallback(async (orderId: string) => {
           try {
                const response = await fetch(`${API_URL}/orders/${orderId}/accept`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ deliveryPartnerId: user?.id }),
                });
-
                const data = await response.json();
-
                if (response.ok) {
                     Alert.alert('Accepted', 'Order assigned to you!', [
-                         { text: 'Go to Map', onPress: () => navigation.navigate('DeliveryHome') }
+                         { text: 'Go Home', onPress: () => navigation.navigate('DeliveryHome') }
                     ]);
-                    setOrders(prev => prev.filter(o => o._id !== orderId));
+                    setOrders(prev => prev.filter((o: any) => o._id !== orderId));
                } else {
                     Alert.alert('Error', data.message || 'Could not accept order');
                }
-          } catch (error) {
+          } catch {
                Alert.alert('Error', 'Connection failed');
           }
-     };
+     }, [user?.id, navigation]);
 
      if (isLoading && !refreshing) {
           return (
@@ -67,6 +61,41 @@ export const DeliveryOrdersScreen = () => {
                </View>
           );
      }
+
+     const renderItem = useCallback(({ item }: { item: any }) => (
+          <View className="bg-white p-6 mb-5 rounded-[32px] shadow-card border border-neutral-100">
+               <View className="flex-row justify-between items-center mb-4">
+                    <View className="bg-blue-50 px-3 py-1 rounded-full">
+                         <Text className="text-blue-700 font-black text-[10px] uppercase">₹{item.totalAmount} • {item.items.length} Items</Text>
+                    </View>
+                    <Text className="text-neutral-400 font-bold text-[10px]">#{item._id.slice(-6).toUpperCase()}</Text>
+               </View>
+
+               <View className="flex-row items-center mb-6">
+                    <View className="bg-blue-600 p-4 rounded-2xl mr-4">
+                         <Package size={24} color="white" />
+                    </View>
+                    <View className="flex-1">
+                         <Text className="text-neutral-900 font-black text-lg leading-tight" numberOfLines={1}>
+                              Pickup: {item.farmerId?.username || 'Local Farm'}
+                         </Text>
+                         <View className="flex-row items-center mt-1">
+                              <MapPin size={12} color="#64748B" />
+                              <Text className="text-neutral-500 text-xs ml-1" numberOfLines={1}>
+                                   {item.deliveryAddress || 'Detecting address...'}
+                              </Text>
+                         </View>
+                    </View>
+               </View>
+
+               <TouchableOpacity
+                    className="bg-blue-700 py-4 rounded-2xl items-center shadow-md active:bg-blue-800"
+                    onPress={() => handleAcceptOrder(item._id)}
+               >
+                    <Text className="text-white font-black uppercase tracking-widest italic">Accept Request</Text>
+               </TouchableOpacity>
+          </View>
+     ), [handleAcceptOrder]);
 
      return (
           <View className="flex-1 bg-neutral-50">
@@ -93,40 +122,11 @@ export const DeliveryOrdersScreen = () => {
                               <Text className="text-neutral-400 font-bold text-center mt-4">No pending orders found{'\n'}Check back later!</Text>
                          </View>
                     }
-                    renderItem={({ item }) => (
-                         <View className="bg-white p-6 mb-5 rounded-[32px] shadow-card border border-neutral-100">
-                              <View className="flex-row justify-between items-center mb-4">
-                                   <View className="bg-blue-50 px-3 py-1 rounded-full">
-                                        <Text className="text-blue-700 font-black text-[10px] uppercase">₹{item.totalAmount} • {item.items.length} Items</Text>
-                                   </View>
-                                   <Text className="text-neutral-400 font-bold text-[10px]">#{item._id.slice(-6).toUpperCase()}</Text>
-                              </View>
-
-                              <View className="flex-row items-center mb-6">
-                                   <View className="bg-blue-600 p-4 rounded-2xl mr-4">
-                                        <Package size={24} color="white" />
-                                   </View>
-                                   <View className="flex-1">
-                                        <Text className="text-neutral-900 font-black text-lg leading-tight" numberOfLines={1}>
-                                             Pickup: {item.farmerId?.username || 'Local Farm'}
-                                        </Text>
-                                        <View className="flex-row items-center mt-1">
-                                             <MapPin size={12} color="#64748B" />
-                                             <Text className="text-neutral-500 text-xs ml-1" numberOfLines={1}>
-                                                  {item.deliveryAddress || 'Detecting address...'}
-                                             </Text>
-                                        </View>
-                                   </View>
-                              </View>
-
-                              <TouchableOpacity
-                                   className="bg-blue-700 py-4 rounded-2xl items-center shadow-md active:bg-blue-800"
-                                   onPress={() => handleAcceptOrder(item._id)}
-                              >
-                                   <Text className="text-white font-black uppercase tracking-widest italic">Accept Request</Text>
-                              </TouchableOpacity>
-                         </View>
-                    )}
+                    renderItem={renderItem}
+                    initialNumToRender={8}
+                    maxToRenderPerBatch={8}
+                    windowSize={10}
+                    removeClippedSubviews
                />
           </View>
      );

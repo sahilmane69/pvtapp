@@ -1,67 +1,76 @@
-import React, { useEffect } from 'react';
-import { View, Text, Image, Animated, Dimensions } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-const { height } = Dimensions.get('window');
+import { Sprout } from 'lucide-react-native';
 
 export const SplashScreen = () => {
      const navigation = useNavigation<any>();
-     const fadeAnim = new Animated.Value(0);
-     const slideAnim = new Animated.Value(20);
+
+     // useRef so Animated.Value is created once and never recreated on re-render
+     const fadeAnim = useRef(new Animated.Value(0)).current;
+     const slideAnim = useRef(new Animated.Value(30)).current;
+     const scaleAnim = useRef(new Animated.Value(0.85)).current;
 
      useEffect(() => {
+          // Entrance animation
           Animated.parallel([
                Animated.timing(fadeAnim, {
-                    toValue: 1,
-                    duration: 1000,
-                    useNativeDriver: true,
+                    toValue: 1, duration: 800, useNativeDriver: true,
                }),
-               Animated.timing(slideAnim, {
-                    toValue: 0,
-                    duration: 1000,
-                    useNativeDriver: true,
+               Animated.spring(slideAnim, {
+                    toValue: 0, damping: 18, stiffness: 180, useNativeDriver: true,
+               }),
+               Animated.spring(scaleAnim, {
+                    toValue: 1, damping: 18, stiffness: 180, useNativeDriver: true,
                }),
           ]).start();
 
-          const timer = setTimeout(() => {
-               navigation.replace('Login');
-          }, 2500);
-
+          const timer = setTimeout(() => navigation.replace('Login'), 2200);
           return () => clearTimeout(timer);
-     }, []);
+     }, []); // empty deps — intentional, runs once on mount
 
      return (
-          <View className="flex-1 bg-primary-light items-center justify-center">
-               <Animated.View
-                    style={{
-                         opacity: fadeAnim,
-                         transform: [{ translateY: slideAnim }]
-                    }}
-                    className="items-center"
-               >
-                    <View className="mb-6">
-                         {/* Logo Placeholder - Using a farming themed image from Unsplash */}
-                         <View className="w-64 h-64 items-center justify-center">
-                              <Image
-                                   source={{ uri: 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=800&q=80' }}
-                                   className="w-48 h-48 rounded-full"
-                                   resizeMode="contain"
-                              />
-                              <View className="absolute inset-0 items-center justify-center">
-                                   {/* Simulated FarminGo Logo text and icons layout */}
-                                   <Text className="text-primary-branding text-4xl font-black mt-56">FarminGo</Text>
-                              </View>
-                         </View>
+          <View style={{ flex: 1, backgroundColor: '#E2F2E9', alignItems: 'center', justifyContent: 'center' }}>
+               <Animated.View style={{
+                    opacity: fadeAnim,
+                    transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+                    alignItems: 'center',
+               }}>
+                    {/* Logo mark */}
+                    <View style={{
+                         width: 100, height: 100, borderRadius: 36,
+                         backgroundColor: '#006B44',
+                         alignItems: 'center', justifyContent: 'center',
+                         marginBottom: 24,
+                         shadowColor: '#006B44', shadowOpacity: 0.4,
+                         shadowRadius: 24, shadowOffset: { width: 0, height: 12 },
+                         elevation: 16,
+                    }}>
+                         <Sprout size={52} color="#fff" />
                     </View>
 
-                    <Text className="text-neutral-500 text-lg font-medium tracking-widest mt-8">
+                    {/* App name */}
+                    <Text style={{
+                         fontSize: 40, fontWeight: '900', fontStyle: 'italic',
+                         color: '#006B44', letterSpacing: -1.5,
+                    }}>
+                         FarminGo
+                    </Text>
+
+                    <Text style={{
+                         fontSize: 12, fontWeight: '700', color: '#64748B',
+                         letterSpacing: 3, textTransform: 'uppercase', marginTop: 8,
+                    }}>
                          Farming Made Easy
                     </Text>
                </Animated.View>
 
-               <View className="absolute bottom-12">
-                    <Text className="text-neutral-400 text-xs font-bold uppercase tracking-tighter">
+               {/* Footer */}
+               <View style={{ position: 'absolute', bottom: 40 }}>
+                    <Text style={{
+                         fontSize: 10, fontWeight: '700', color: '#94A3B8',
+                         letterSpacing: 2, textTransform: 'uppercase',
+                    }}>
                          Powered by PVT App
                     </Text>
                </View>

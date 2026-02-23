@@ -8,9 +8,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const CartScreen = () => {
      const navigation = useNavigation<any>();
-     const { cartItems, getCartTotal, removeFromCart, updateQuantity } = useCart();
+     const { cartItems, cartTotal, removeFromCart, updateQuantity } = useCart();
      const { user } = useAuth();
-     const total = getCartTotal();
+     const total = cartTotal;
      const [isLoading, setIsLoading] = useState(false);
 
      const handlePlaceOrder = () => {

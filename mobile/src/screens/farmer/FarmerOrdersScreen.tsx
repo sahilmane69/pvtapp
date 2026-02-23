@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl, Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -12,31 +12,31 @@ export const FarmerOrdersScreen = () => {
      const [loading, setLoading] = useState(true);
      const [refreshing, setRefreshing] = useState(false);
 
-     const fetchOrders = async () => {
+     const fetchOrders = useCallback(async () => {
           try {
                const response = await fetch(`${API_URL}/orders/farmer/${user?.id}`);
                const data = await response.json();
                if (response.ok) {
                     setOrders(data.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
                }
-          } catch (error) {
-               console.error('Error fetching orders:', error);
+          } catch {
+               // Keep dummy data
           } finally {
                setLoading(false);
                setRefreshing(false);
           }
-     };
+     }, [user?.id]);
 
      useEffect(() => {
           if (user?.id) fetchOrders();
-     }, [user?.id]);
+     }, [fetchOrders]);
 
-     const onRefresh = () => {
+     const onRefresh = useCallback(() => {
           setRefreshing(true);
           fetchOrders();
-     };
+     }, [fetchOrders]);
 
-     const renderOrderItem = ({ item }: { item: any }) => (
+     const renderOrderItem = useCallback(({ item }: { item: any }) => (
           <TouchableOpacity
                className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-stone-100"
                activeOpacity={0.7}
@@ -88,7 +88,7 @@ export const FarmerOrdersScreen = () => {
                     <ChevronRight size={16} color="#059669" />
                </View>
           </TouchableOpacity>
-     );
+     ), [navigation]);
 
      if (loading) {
           return (
@@ -108,6 +108,10 @@ export const FarmerOrdersScreen = () => {
                     renderItem={renderOrderItem}
                     keyExtractor={(item: any) => item._id}
                     contentContainerStyle={{ padding: 16 }}
+                    initialNumToRender={10}
+                    maxToRenderPerBatch={10}
+                    windowSize={10}
+                    removeClippedSubviews
                     refreshControl={
                          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#059669']} />
                     }

@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { API_URL } from '../../utils/constants';
+import { DUMMY_ORDERS, FARMER_STATS_DUMMY } from '../../data/mockData';
 
 const { width } = Dimensions.get('window');
 
@@ -34,13 +35,13 @@ export const FarmerDashboardScreen = () => {
      const { user, logout } = useAuth();
      const navigation = useNavigation<any>();
      const [stats, setStats] = useState<Stats>({
-          totalOrders: 0,
-          completedDeliveries: 0,
-          pendingOrders: 0,
-          earnings: 0
+          totalOrders: FARMER_STATS_DUMMY.totalOrders,
+          completedDeliveries: FARMER_STATS_DUMMY.completedOrders,
+          pendingOrders: FARMER_STATS_DUMMY.pendingOrders,
+          earnings: FARMER_STATS_DUMMY.totalEarnings,
      });
-     const [recentOrders, setRecentOrders] = useState([]);
-     const [isLoading, setIsLoading] = useState(true);
+     const [recentOrders, setRecentOrders] = useState<any[]>(DUMMY_ORDERS);
+     const [isLoading, setIsLoading] = useState(false);
      const [refreshing, setRefreshing] = useState(false);
 
      const fetchDashboardData = async () => {
@@ -48,7 +49,7 @@ export const FarmerDashboardScreen = () => {
                const response = await fetch(`${API_URL}/orders/farmer/${user?.id}`);
                const orders = await response.json();
 
-               if (response.ok) {
+               if (response.ok && orders?.length > 0) {
                     const completed = orders.filter((o: any) => o.status === 'delivered');
                     const pending = orders.filter((o: any) => o.status === 'pending');
                     const totalEarnings = completed.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0);
@@ -57,12 +58,12 @@ export const FarmerDashboardScreen = () => {
                          totalOrders: orders.length,
                          completedDeliveries: completed.length,
                          pendingOrders: pending.length,
-                         earnings: totalEarnings
+                         earnings: totalEarnings || FARMER_STATS_DUMMY.totalEarnings,
                     });
                     setRecentOrders(orders.slice(0, 5));
                }
           } catch (error) {
-               console.error('Dashboard fetch error:', error);
+               // Keep dummy data on error
           } finally {
                setIsLoading(false);
                setRefreshing(false);

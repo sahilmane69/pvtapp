@@ -1,2 +1,2 @@
-// Export data services/mocks from here
-export { };
+export * from './mockData';
+export * from './products';

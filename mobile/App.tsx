@@ -1,5 +1,10 @@
-import AppIndex from './src/app/index';
+import AppIndex from './src/AppRoot';
+import { NavigationContainer } from '@react-navigation/native';
 
 export default function App() {
-  return <AppIndex />;
+  return (
+    <NavigationContainer>
+      <AppIndex />
+    </NavigationContainer>
+  );
 }

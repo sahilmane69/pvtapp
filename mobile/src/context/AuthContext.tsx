@@ -1,7 +1,13 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, {
+     createContext,
+     useState,
+     useContext,
+     useCallback,
+     useMemo,
+     ReactNode,
+     useEffect,
+} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-console.log('--- AuthContext Module Loaded ---');
 
 type UserRole = 'CUSTOMER' | 'FARMER' | 'DELIVERY' | 'ADMIN' | null;
 
@@ -27,37 +33,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
      const [isLoading, setIsLoading] = useState(true);
      const [user, setUserState] = useState<AuthUser | null>(null);
 
+     // Load persisted auth on mount — run once
      useEffect(() => {
+          let cancelled = false;
+
           const loadAuth = async () => {
                try {
-                    const storedRole = await AsyncStorage.getItem('userRole');
-                    const storedUser = await AsyncStorage.getItem('authUser');
+                    const [storedRole, storedUser] = await AsyncStorage.multiGet(['userRole', 'authUser']);
 
-                    if (storedRole) {
-                         setRoleState(storedRole as UserRole);
-                    }
+                    if (cancelled) return;
 
-                    if (storedUser) {
+                    const role = storedRole[1];
+                    const rawUser = storedUser[1];
+
+                    if (role) setRoleState(role as UserRole);
+
+                    if (rawUser) {
                          try {
-                              const parsed: AuthUser = JSON.parse(storedUser);
-                              setUserState(parsed);
-                              console.log('Loaded auth user:', parsed.username);
-                         } catch (e) {
-                              console.error('Error parsing stored user:', e);
+                              setUserState(JSON.parse(rawUser) as AuthUser);
+                         } catch {
                               await AsyncStorage.removeItem('authUser');
                          }
                     }
-               } catch (error) {
-                    console.error('Failed to load auth state:', error);
+               } catch {
+                    // Silently fall through; user will get login screen
                } finally {
-                    setIsLoading(false);
+                    if (!cancelled) setIsLoading(false);
                }
           };
 
           loadAuth();
+          return () => { cancelled = true; };
      }, []);
 
-     const setUserRole = async (role: UserRole) => {
+     const setUserRole = useCallback(async (role: UserRole) => {
           try {
                if (role) {
                     await AsyncStorage.setItem('userRole', role);
@@ -65,12 +74,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     await AsyncStorage.removeItem('userRole');
                }
                setRoleState(role);
-          } catch (error) {
-               console.error('Failed to save user role:', error);
+          } catch {
+               // Storage failure — state is still updated in memory
           }
-     };
+     }, []);
 
-     const setUser = async (authUser: AuthUser | null) => {
+     const setUser = useCallback(async (authUser: AuthUser | null) => {
           try {
                if (authUser) {
                     await AsyncStorage.setItem('authUser', JSON.stringify(authUser));
@@ -79,28 +88,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     await AsyncStorage.removeItem('authUser');
                     setUserState(null);
                }
-          } catch (error) {
-               console.error('Failed to save auth user:', error);
+          } catch {
+               // Storage failure — state is still updated in memory
           }
-     };
+     }, []);
 
-     const logout = async () => {
-          await setUserRole(null);
-          await setUser(null);
-     };
+     const logout = useCallback(async () => {
+          try {
+               await AsyncStorage.multiRemove(['userRole', 'authUser']);
+          } catch { /* ignore */ }
+          setRoleState(null);
+          setUserState(null);
+     }, []);
 
-     return (
-          <AuthContext.Provider value={{ userRole, setUserRole, isLoading, logout, user, setUser }}>
-               {children}
-          </AuthContext.Provider>
+     // Memoize context value — only changes when actual state changes
+     const value = useMemo<AuthContextType>(
+          () => ({ userRole, setUserRole, isLoading, logout, user, setUser }),
+          [userRole, setUserRole, isLoading, logout, user, setUser]
      );
+
+     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
      const context = useContext(AuthContext);
-     if (!context) {
-          throw new Error('useAuth must be used within an AuthProvider');
-     }
+     if (!context) throw new Error('useAuth must be used within an AuthProvider');
      return context;
 };

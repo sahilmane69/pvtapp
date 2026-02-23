@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch, Image, Dimensions, ActivityIndicator, RefreshControl } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { API_URL } from '../../utils/constants';
+import { DELIVERY_STATS_DUMMY, DUMMY_ORDERS } from '../../data/mockData';
 
 const { width } = Dimensions.get('window');
 
@@ -25,48 +26,48 @@ export const DeliveryHomeScreen = () => {
      const navigation = useNavigation<any>();
      const { user, logout } = useAuth();
      const [isOnline, setIsOnline] = useState(true);
-     const [summary, setSummary] = useState({ earnings: 0, completedCount: 0 });
-     const [activeTasks, setActiveTasks] = useState([]);
-     const [isLoading, setIsLoading] = useState(true);
+     const [summary, setSummary] = useState({
+          earnings: DELIVERY_STATS_DUMMY.totalEarnings,
+          completedCount: DELIVERY_STATS_DUMMY.deliveredCount,
+     });
+     const [activeTasks, setActiveTasks] = useState<any[]>(() =>
+          DUMMY_ORDERS.filter(o => o.status === 'assigned' || o.status === 'pending').slice(0, 3)
+     );
+     const [isLoading, setIsLoading] = useState(false);
      const [refreshing, setRefreshing] = useState(false);
 
-     const fetchDeliveryData = async () => {
+     const fetchDeliveryData = useCallback(async () => {
           try {
                const sumRes = await fetch(`${API_URL}/orders/delivery/${user?.id}/summary`);
                const sumData = await sumRes.json();
-               if (sumRes.ok) setSummary({
-                    earnings: sumData.totalEarnings || 0,
-                    completedCount: sumData.deliveredCount || 0
-               });
+               if (sumRes.ok && (sumData.totalEarnings || sumData.deliveredCount)) {
+                    setSummary({
+                         earnings: sumData.totalEarnings || DELIVERY_STATS_DUMMY.totalEarnings,
+                         completedCount: sumData.deliveredCount || DELIVERY_STATS_DUMMY.deliveredCount,
+                    });
+               }
 
                const taskRes = await fetch(`${API_URL}/orders/delivery`);
                const taskData = await taskRes.json();
-               if (taskRes.ok) setActiveTasks(taskData.slice(0, 3));
-
-          } catch (error) {
-               console.error('Delivery dashboard fetch error:', error);
+               if (taskRes.ok && taskData?.length > 0) {
+                    setActiveTasks(taskData.slice(0, 3));
+               }
+          } catch {
+               // Keep dummy data on error
           } finally {
                setIsLoading(false);
                setRefreshing(false);
           }
-     };
+     }, [user?.id]);
 
      useEffect(() => {
           fetchDeliveryData();
-     }, []);
+     }, [fetchDeliveryData]);
 
-     const onRefresh = () => {
+     const onRefresh = useCallback(() => {
           setRefreshing(true);
           fetchDeliveryData();
-     };
-
-     if (isLoading) {
-          return (
-               <View className="flex-1 justify-center items-center bg-background">
-                    <ActivityIndicator size="large" color="#006B44" />
-               </View>
-          );
-     }
+     }, [fetchDeliveryData]);
 
      return (
           <View className="flex-1 bg-background">

@@ -12,8 +12,8 @@ import { API_URL } from '../../utils/constants';
 export const PaymentScreen = () => {
      const navigation = useNavigation<any>();
      const { user } = useAuth();
-     const { cartItems, getCartTotal, clearCart } = useCart();
-     const total = getCartTotal();
+     const { cartItems, cartTotal, clearCart } = useCart();
+     const total = cartTotal;
      const [isLoading, setIsLoading] = useState(false);
      const [isLocating, setIsLocating] = useState(false);
      const [selectedMethod, setSelectedMethod] = useState<'card' | 'upi' | 'cod'>('card');

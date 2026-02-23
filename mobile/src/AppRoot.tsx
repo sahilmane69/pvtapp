@@ -1,13 +1,12 @@
-import '../../global.css';
+import '../global.css';
 import React from 'react';
-import { RootNavigator } from '../navigation/RootNavigator';
+import { RootNavigator } from './navigation/RootNavigator';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { CartProvider } from '../context/CartContext';
-import { AuthProvider } from '../context/AuthContext';
+import { CartProvider } from './context/CartContext';
+import { AuthProvider } from './context/AuthContext';
 
 export default function AppIndex() {
-     console.log('--- AppIndex Mounting ---');
      return (
           <SafeAreaProvider>
                <AuthProvider>

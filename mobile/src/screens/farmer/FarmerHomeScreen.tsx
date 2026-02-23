@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -21,10 +21,14 @@ export const FarmerHomeScreen = () => {
      const [featuredProducts, setFeaturedProducts] = useState([]);
 
      useEffect(() => {
+          let cancelled = false;
           fetch(`${API_URL}/products`)
-               .then(res => res.json())
-               .then(data => setFeaturedProducts(data.slice(0, 5)))
-               .catch(err => console.error(err));
+               .then(res => res.ok ? res.json() : [])
+               .then(data => {
+                    if (!cancelled && data?.length > 0) setFeaturedProducts(data.slice(0, 5));
+               })
+               .catch(() => { /* silently use dummy data */ });
+          return () => { cancelled = true; };
      }, []);
 
      return (

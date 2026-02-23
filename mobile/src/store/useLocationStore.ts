@@ -23,7 +23,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
                set({ permissionStatus: status });
 
                if (status !== 'granted') {
-                    console.log('Location permission denied, using fallback');
+                    // Permission denied — use Pune fallback silently
                     set({
                          coords: { latitude: 18.5204, longitude: 73.8567 }, // Pune fallback
                          address: 'Pune, Maharashtra (Default)',
@@ -49,8 +49,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
                     const addr = `${addressResult.name || ''} ${addressResult.street || ''}, ${addressResult.city || ''}`.trim();
                     set({ address: addr || 'Current Location' });
                }
-          } catch (error) {
-               console.error('Error detecting location:', error);
+          } catch {
                set({
                     coords: { latitude: 18.5204, longitude: 73.8567 },
                     address: 'Pune (Fallback)'

@@ -17,10 +17,23 @@ const productSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    mrp: {
+      type: Number,
+      default: 0,
+    },
+    discount: {
+      type: Number,
+      default: 0,
+    },
     quantityAvailable: {
       type: Number,
       required: true,
       min: 0,
+    },
+    stockStatus: {
+      type: String,
+      enum: ["In Stock", "Low Stock", "Out of Stock"],
+      default: "In Stock",
     },
     image: {
       type: String,
@@ -45,4 +58,3 @@ const productSchema = new mongoose.Schema(
 const Product = mongoose.model("Product", productSchema);
 
 module.exports = Product;
-
