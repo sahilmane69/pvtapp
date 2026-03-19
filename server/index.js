@@ -25,8 +25,8 @@ app.use(express.json());
 
 // MongoDB Connection
 mongoose
-  .connect(process.env.MONGO_URI || "mongodb://localhost:27017/farmingo")
-  .then(() => console.log("MongoDB connected"))
+  .connect(process.env.MONGO_URI || "mongodb+srv://sahilmane:sahil123@cluster0.16wovuc.mongodb.net/farmingo")
+  .then(() => console.log("MongoDB connected to Atlas Cluster"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
 app.use("/auth", require("./routes/auth"));
