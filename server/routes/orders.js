@@ -1,12 +1,50 @@
 const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
+// Helper to get location from IP
+const getLocationFromIP = async (ip) => {
+  try {
+    // For local development, skip localhost IP
+    if (ip === "::1" || ip === "127.0.0.1") return null;
+    const response = await fetch(`http://ip-api.com/json/${ip}`);
+    const data = await response.json();
+    if (data && data.status === "success") {
+      return {
+        lat: data.lat,
+        lng: data.lon,
+        city: data.city,
+        region: data.regionName
+      };
+    }
+  } catch (error) {
+    console.error("IP Geolocate failed:", error.message);
+  }
+  return null;
+};
 
 // Create a new order
 router.post("/", async (req, res) => {
   try {
     const { farmerId, items, totalAmount, deliveryAddress, deliveryLocation } =
       req.body;
+    
+    // Auto-detect location if not provided
+    let finalLocation = {
+      lat: deliveryLocation?.lat ?? null,
+      lng: deliveryLocation?.lng ?? null
+    };
+
+    if (!finalLocation.lat) {
+      const detected = await getLocationFromIP(req.ip);
+      if (detected) {
+        finalLocation.lat = detected.lat;
+        finalLocation.lng = detected.lng;
+        // Optionally update address if empty
+        if (!deliveryAddress) {
+          req.body.deliveryAddress = `${detected.city}, ${detected.region}`;
+        }
+      }
+    }
 
     if (!farmerId || !items || items.length === 0) {
       return res
@@ -16,14 +54,12 @@ router.post("/", async (req, res) => {
 
     const newOrder = new Order({
       farmerId,
+      customerId: req.body.customerId, // Ensure this is also passed or fetched
       items,
-      totalAmount: totalAmount || 0, // Should be calculated or passed from frontend
+      totalAmount: totalAmount || 0,
       status: "pending",
-      deliveryAddress: deliveryAddress || "",
-      deliveryLocation: {
-        lat: deliveryLocation?.lat ?? null,
-        lng: deliveryLocation?.lng ?? null,
-      },
+      deliveryAddress: req.body.deliveryAddress || deliveryAddress || "",
+      deliveryLocation: finalLocation,
     });
 
     const savedOrder = await newOrder.save();

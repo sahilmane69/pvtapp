@@ -3,7 +3,6 @@ import {
      View, Text, TouchableOpacity, Alert,
      Animated, ActivityIndicator, Dimensions, ScrollView,
 } from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -50,22 +49,6 @@ const statusIndex = (s: OrderStatus) => {
 };
 
 // ─── Map region that fits both markers ──────────────────────────
-const fitRegion = (
-     driver: { latitude: number; longitude: number },
-     customer: { latitude: number; longitude: number }
-): Region => {
-     const minLat = Math.min(driver.latitude, customer.latitude);
-     const maxLat = Math.max(driver.latitude, customer.latitude);
-     const minLng = Math.min(driver.longitude, customer.longitude);
-     const maxLng = Math.max(driver.longitude, customer.longitude);
-     const pad = 0.005;
-     return {
-          latitude: (minLat + maxLat) / 2,
-          longitude: (minLng + maxLng) / 2,
-          latitudeDelta: Math.max(maxLat - minLat + pad * 2, 0.015),
-          longitudeDelta: Math.max(maxLng - minLng + pad * 2, 0.015),
-     };
-};
 
 // ─── Custom marker views ──────────────────────────────────────────
 const DriverMarkerView = () => (
@@ -122,7 +105,6 @@ export const TrackingScreen = () => {
           lng: new Animated.Value(FALLBACK_DRIVER.longitude),
      }).current;
 
-     const mapRef = useRef<MapView>(null);
      const socketRef = useRef<any>(null);
 
      // Simulated route polyline (straight line for now — real polyline requires Directions API)
@@ -172,15 +154,6 @@ export const TrackingScreen = () => {
      );
 
      // ── Fit map to show both markers ──────────────────────────────
-     const fitMap = useCallback(() => {
-          mapRef.current?.fitToCoordinates(
-               [driverCoord, customerCoord],
-               {
-                    edgePadding: { top: 80, right: 60, bottom: 60, left: 60 },
-                    animated: true,
-               }
-          );
-     }, [driverCoord, customerCoord]);
 
      // ── Order fetch + Socket setup ────────────────────────────────
      useEffect(() => {
@@ -212,8 +185,7 @@ export const TrackingScreen = () => {
           socket.on('driver_location', (data: { latitude: number; longitude: number }) => {
                animateDriverTo(data.latitude, data.longitude);
                setEta(prev => Math.max(1, prev - 1));
-               // Re-fit map
-               setTimeout(() => fitMap(), 900);
+               setTimeout(() => { /* logic removed */ }, 900);
           });
 
           socket.on('order_accepted', () => setStatus('assigned'));
@@ -270,7 +242,6 @@ export const TrackingScreen = () => {
      };
 
      const currentStepIdx = statusIndex(status);
-     const mapRegion = fitRegion(driverCoord, customerCoord);
 
      // ── Pulse animation for "pending" state ───────────────────────
      const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -288,125 +259,67 @@ export const TrackingScreen = () => {
      return (
           <View style={{ flex: 1, backgroundColor: '#fff' }}>
 
-               {/* ── MAP (top 45% of screen) ─────────────────────────── */}
-               <View style={{ height: height * 0.48 }}>
-                    <MapView
-                         ref={mapRef}
-                         provider={PROVIDER_GOOGLE}
-                         style={{ flex: 1 }}
-                         initialRegion={mapRegion}
-                         showsUserLocation={locationPermission === true}
-                         showsMyLocationButton={false}
-                         showsCompass={false}
-                         toolbarEnabled={false}
-                         onMapReady={fitMap}
-                         mapType="standard"
-                    >
-                         {/* Route polyline */}
-                         {status !== 'pending' && (
-                              <Polyline
-                                   coordinates={routeCoords}
-                                   strokeColor="#006B44"
-                                   strokeWidth={4}
-                                   lineDashPattern={[8, 4]}
-                              />
-                         )}
+               {/* ── STATUS HEADER (REPLACED MAP) ─────────────────────────── */}
+               <View style={{ 
+                    height: height * 0.40, 
+                    backgroundColor: '#006B44',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingTop: 40
+               }}>
+                    {/* Animated Pulse Ring */}
+                    <Animated.View style={{
+                         width: 140, height: 140, borderRadius: 70,
+                         backgroundColor: 'rgba(255,255,255,0.15)',
+                         position: 'absolute',
+                         transform: [{ scale: pulseAnim }],
+                    }} />
+                    
+                    <View style={{
+                         backgroundColor: '#fff', 
+                         padding: 24, 
+                         borderRadius: 40,
+                         shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 15, elevation: 12,
+                    }}>
+                         <Truck size={42} color="#006B44" />
+                    </View>
 
-                         {/* Driver marker */}
-                         {status !== 'pending' && (
-                              <Marker
-                                   coordinate={driverCoord}
-                                   tracksViewChanges={false}
-                                   anchor={{ x: 0.5, y: 0.5 }}
-                                   title="Delivery Partner"
-                                   description={`ETA: ${eta} min`}
-                              >
-                                   <DriverMarkerView />
-                              </Marker>
-                         )}
+                    <Text style={{ 
+                         color: '#fff', 
+                         marginTop: 20, 
+                         fontSize: 22, 
+                         fontWeight: '900',
+                         fontStyle: 'italic',
+                         textAlign: 'center'
+                    }}>
+                         {status === 'delivered' ? 'DELIVERED ✔' : 'ON THE WAY'}
+                    </Text>
+                    
+                    <Text style={{ 
+                         color: 'rgba(255,255,255,0.8)', 
+                         fontSize: 14, 
+                         fontWeight: '600',
+                         marginTop: 4
+                    }}>
+                         {status === 'pending' ? 'Searching for partner...' : `Tracking ID: ${(orderId??"DEMO").slice(-6).toUpperCase()}`}
+                    </Text>
 
-                         {/* Customer drop-off marker */}
-                         <Marker
-                              coordinate={customerCoord}
-                              tracksViewChanges={false}
-                              anchor={{ x: 0.5, y: 1 }}
-                              title="Your Location"
-                         >
-                              <CustomerMarkerView />
-                         </Marker>
-                    </MapView>
-
-                    {/* Pending state radar overlay */}
-                    {status === 'pending' && (
-                         <View style={{
-                              position: 'absolute', inset: 0,
-                              alignItems: 'center', justifyContent: 'center',
-                              backgroundColor: 'rgba(255,255,255,0.15)',
-                         }}>
-                              <Animated.View style={{
-                                   width: 120, height: 120, borderRadius: 60,
-                                   backgroundColor: 'rgba(0,107,68,0.12)',
-                                   position: 'absolute',
-                                   transform: [{ scale: pulseAnim }],
-                              }} />
-                              <View style={{
-                                   backgroundColor: '#fff', padding: 16, borderRadius: 99,
-                                   shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, elevation: 8,
-                              }}>
-                                   <Navigation size={28} color="#006B44" />
-                              </View>
-                              <Text style={{
-                                   marginTop: 12, color: '#fff', fontWeight: '800',
-                                   fontSize: 13, letterSpacing: 0.5,
-                                   textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4,
-                              }}>
-                                   Finding Delivery Partner…
-                              </Text>
-                         </View>
-                    )}
-
-                    {/* Top bar */}
+                    {/* Top bar Overlay */}
                     <SafeAreaView edges={['top']} style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
-                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8 }}>
+                         <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
                               <TouchableOpacity
                                    onPress={() => navigation.goBack()}
                                    style={{
-                                        backgroundColor: '#fff', padding: 10, borderRadius: 16,
-                                        shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4,
+                                        backgroundColor: 'rgba(255,255,255,0.2)', 
+                                        padding: 10, 
+                                        borderRadius: 16,
+                                        alignSelf: 'flex-start'
                                    }}
                               >
-                                   <ArrowLeft size={20} color="#1e293b" />
+                                   <ArrowLeft size={20} color="#fff" />
                               </TouchableOpacity>
-
-                              {status !== 'pending' && (
-                                   <TouchableOpacity
-                                        onPress={fitMap}
-                                        style={{
-                                             backgroundColor: '#fff', padding: 10, borderRadius: 16,
-                                             shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4,
-                                        }}
-                                   >
-                                        <Navigation size={20} color="#006B44" />
-                                   </TouchableOpacity>
-                              )}
                          </View>
                     </SafeAreaView>
-
-                    {/* Location permission denied notice */}
-                    {locationPermission === false && (
-                         <View style={{
-                              position: 'absolute', bottom: 12, left: 16, right: 16,
-                              backgroundColor: '#FFF7ED',
-                              borderRadius: 16, padding: 12,
-                              flexDirection: 'row', alignItems: 'center',
-                              borderWidth: 1, borderColor: '#FED7AA',
-                         }}>
-                              <AlertCircle size={16} color="#EA580C" />
-                              <Text style={{ marginLeft: 8, color: '#9A3412', fontSize: 11, fontWeight: '700', flex: 1 }}>
-                                   Location permission denied. Using demo coordinates. Enable in settings.
-                              </Text>
-                         </View>
-                    )}
                </View>
 
                {/* ── BOTTOM SHEET ────────────────────────────────────── */}
