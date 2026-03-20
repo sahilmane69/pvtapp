@@ -10,8 +10,8 @@ import { DUMMY_ORDERS, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '../../da
 export const CustomerOrdersScreen = () => {
      const { user } = useAuth();
      const navigation = useNavigation<any>();
-     const [orders, setOrders] = useState<any[]>(DUMMY_ORDERS);
-     const [loading, setLoading] = useState(false);
+     const [orders, setOrders] = useState<any[]>([]);
+     const [loading, setLoading] = useState(true);
      const [refreshing, setRefreshing] = useState(false);
 
      const fetchOrders = useCallback(async () => {

@@ -73,9 +73,9 @@ export const LoginScreen = () => {
                <SafeAreaView className="flex-1">
                     <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
                          {/* Top Illustration Section */}
-                         <View className="items-center justify-center pt-10 pb-6 px-10" style={{ height: height * 0.4 }}>
+                         <View className="items-center justify-center pt-10 pb-6 px-10" style={{ height: height * 0.35 }}>
                               <Image
-                                   source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3588/3588658.png' }} // Modern login illustration
+                                   source={require('../../../assets/icon.png')}
                                    className="w-full h-full"
                                    resizeMode="contain"
                               />
@@ -83,7 +83,7 @@ export const LoginScreen = () => {
 
                          {/* Login Hero Text */}
                          <View className="items-center pb-8">
-                              <Text className="text-primary-branding text-3xl font-black italic tracking-widest">LOGIN HERE</Text>
+                              <Text className="text-primary-branding text-3xl font-black italic tracking-widest uppercase">FARMIN GO</Text>
                          </View>
 
                          {/* Form Container */}

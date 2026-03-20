@@ -20,8 +20,8 @@ import {
      User as UserIcon,
      X,
      ChevronRight,
-     Sprout,
 } from 'lucide-react-native';
+import { Image as RNImage } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const DRAWER_WIDTH = width * 0.78;
@@ -219,7 +219,7 @@ export const CustomerDrawer = ({ navigation, activeRouteName = '' }: CustomerDra
                          paddingHorizontal: 24, paddingTop: 12, paddingBottom: 4,
                          flexDirection: 'row', alignItems: 'center',
                     }}>
-                         <Sprout size={14} color="#006B44" />
+                          <RNImage source={require('../../assets/icon.png')} style={{ width: 18, height: 18, borderRadius: 4 }} resizeMode="contain" />
                          <Text style={{
                               color: '#006B44', fontSize: 11, fontWeight: '900',
                               letterSpacing: 1.5, textTransform: 'uppercase', marginLeft: 6,

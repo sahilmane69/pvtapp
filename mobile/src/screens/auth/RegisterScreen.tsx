@@ -3,11 +3,13 @@ import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, Imag
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { API_URL } from '../../utils/constants';
+import { useAuth } from '../../context/AuthContext';
 
 const { height } = Dimensions.get('window');
 
 export const RegisterScreen = () => {
      const navigation = useNavigation<any>();
+     const { setUser, setUserRole } = useAuth();
      const [username, setUsername] = useState('');
      const [phone, setPhone] = useState('');
      const [password, setPassword] = useState('');
@@ -41,9 +43,11 @@ export const RegisterScreen = () => {
                }
 
                if (response.ok) {
-                    Alert.alert('Account created', 'You can now log in', [
-                         { text: 'OK', onPress: () => navigation.navigate('Login') },
-                    ]);
+                    // Auto-login after registration as CUSTOMER
+                    const userData = data.user;
+                    await setUser({ id: userData.id, username: userData.username, role: 'CUSTOMER' });
+                    await setUserRole('CUSTOMER');
+                    Alert.alert('Welcome to FarminGo!', 'Your account has been created successfully!');
                } else {
                     Alert.alert('Register failed', data?.message || 'Something went wrong');
                }
@@ -62,20 +66,20 @@ export const RegisterScreen = () => {
                          {/* Header */}
                          <View className="items-center pt-8 pb-4" style={{ height: height * 0.25 }}>
                               <Image
-                                   source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3588/3588628.png' }}
+                                   source={require('../../../assets/icon.png')}
                                    className="w-40 h-40"
                                    resizeMode="contain"
                               />
                          </View>
 
                          <View className="items-center pb-6">
-                              <Text className="text-primary-branding text-3xl font-black italic tracking-widest">JOIN US</Text>
+                              <Text className="text-primary-branding text-3xl font-black italic tracking-widest uppercase">FarminGo</Text>
                          </View>
 
                          {/* Form */}
                          <View className="flex-1 bg-white rounded-t-5xl px-8 pt-10 shadow-premium">
                               <View className="items-center mb-8">
-                                   <Text className="text-neutral-900 text-lg font-bold">Create Your FarminGo Account</Text>
+                                   <Text className="text-neutral-900 text-lg font-bold uppercase tracking-tight">Create Your Account</Text>
                               </View>
 
                               <View className="space-y-5">

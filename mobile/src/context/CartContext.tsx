@@ -5,7 +5,10 @@ import React, {
      useCallback,
      useMemo,
      ReactNode,
+     useEffect,
 } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from './AuthContext';
 
 interface Product {
      id: string;
@@ -38,7 +41,34 @@ const resolveId = (item: Pick<Product, 'id' | '_id'>) =>
      item.id || item._id || '';
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
+     const { user } = useAuth();
      const [cartItems, setCartItems] = useState<CartItem[]>([]);
+     const userId = user?.id || 'guest';
+     const CART_STORAGE_KEY = `cart_${userId}`;
+
+     // Load cart on user change (e.g. login/logout or switch)
+     useEffect(() => {
+          let cancelled = false;
+          const loadPersistedCart = async () => {
+               try {
+                    const stored = await AsyncStorage.getItem(CART_STORAGE_KEY);
+                    if (!cancelled && stored) {
+                         const items = JSON.parse(stored);
+                         setCartItems(items);
+                    } else if (stored === null) {
+                        setCartItems([]); // clean start for new user session
+                    }
+               } catch { /* silence */ }
+          };
+          loadPersistedCart();
+          return () => { cancelled = true; };
+     }, [CART_STORAGE_KEY]);
+
+     // Save cart on every update
+     useEffect(() => {
+          AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems))
+               .catch(() => { /* silent fail */ });
+     }, [cartItems, CART_STORAGE_KEY]);
 
      const addToCart = useCallback((product: Product) => {
           const itemId = resolveId(product);

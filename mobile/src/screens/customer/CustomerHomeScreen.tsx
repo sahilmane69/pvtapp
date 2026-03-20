@@ -8,7 +8,9 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDrawer } from '../../context/DrawerContext';
-import { Search, MapPin, Plus, User as UserIcon, ShoppingBag } from 'lucide-react-native';
+import { useCart } from '../../context/CartContext';
+import { useLocationStore } from '../../store/useLocationStore';
+import { Search, MapPin, Plus, User as UserIcon, ShoppingBag, Check } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { API_URL } from '../../utils/constants';
 import { DUMMY_PRODUCTS, STOCK_STATUS_COLORS } from '../../data/mockData';
@@ -78,7 +80,6 @@ const BannerCarousel = memo(() => {
      const [dotIndex, setDotIndex] = useState(0); // separate state just for dots
      const isPaused = useRef(false);
 
-     // Stable render function — never recreated
      const renderItem = useCallback(({ item }: { item: typeof BANNERS[0] }) => (
           <BannerItem item={item} />
      ), []);
@@ -96,7 +97,6 @@ const BannerCarousel = memo(() => {
           setDotIndex(newIdx);
      }, []);
 
-     // Auto-scroll reads from ref — no stale closure issue
      useEffect(() => {
           const id = setInterval(() => {
                if (isPaused.current) return;
@@ -106,7 +106,7 @@ const BannerCarousel = memo(() => {
                setDotIndex(next);
           }, 4000);
           return () => clearInterval(id);
-     }, []); // runs once — safe because we read from ref
+     }, []);
 
      return (
           <View className="mt-6">
@@ -125,11 +125,7 @@ const BannerCarousel = memo(() => {
                     onScrollEndDrag={() => { isPaused.current = false; }}
                     onMomentumScrollEnd={onMomentumScrollEnd}
                     initialNumToRender={2}
-                    maxToRenderPerBatch={2}
-                    windowSize={3}
-                    removeClippedSubviews
                />
-               {/* Dot indicators */}
                <View className="flex-row justify-center mt-4">
                     {BANNERS.map((_, i) => (
                          <View key={i}
@@ -141,61 +137,65 @@ const BannerCarousel = memo(() => {
      );
 });
 
-// ── Product Card (memoized so grid items don't re-render on search) ─
-const ProductCard = memo(({ item }: { item: any }) => {
+// ── Product Card ──────────────────────────────────────────────────
+const ProductCard = memo(({ item, onAdd }: { item: any; onAdd: (item: any) => void }) => {
      const mrp = item.mrp || Math.round(item.price * 1.3);
      const discount = item.discount || Math.round((1 - item.price / mrp) * 100);
      const stock = item.stockStatus || 'In Stock';
      const sColor = STOCK_STATUS_COLORS[stock] || '#059669';
+     const [added, setAdded] = useState(false);
+
+     const handleAdd = () => {
+          onAdd(item);
+          setAdded(true);
+          setTimeout(() => setAdded(false), 2000);
+     };
 
      return (
-          <TouchableOpacity
-               activeOpacity={0.92}
-               className="bg-white rounded-[32px] p-4 mb-5 shadow-card border border-neutral-100"
-               style={{ width: CARD_WIDTH }}
-          >
-               {discount > 0 && (
-                    <View className="absolute top-4 right-4 z-10 bg-primary-branding px-2 py-0.5 rounded-lg">
-                         <Text className="text-white text-[9px] font-black">-{discount}%</Text>
+          <View className="bg-white rounded-[32px] p-4 mb-5 shadow-card border border-neutral-100" style={{ width: CARD_WIDTH }}>
+               <TouchableOpacity activeOpacity={0.92}>
+                    {discount > 0 && (
+                         <View className="absolute top-4 right-4 z-10 bg-primary-branding px-2 py-0.5 rounded-lg">
+                              <Text className="text-white text-[9px] font-black">-{discount}%</Text>
+                         </View>
+                    )}
+                    <View className="items-center mb-3 bg-neutral-50 rounded-3xl p-3 h-[120px] justify-center">
+                         <Image source={{ uri: item.image || DUMMY_PRODUCTS[0].image }} className="w-full h-full" resizeMode="contain" />
+                         <TouchableOpacity
+                               onPress={handleAdd}
+                               className={`absolute bottom-[-10px] right-[-10px] p-2.5 rounded-2xl shadow-premium ${added ? 'bg-emerald-600' : 'bg-primary-branding'}`}>
+                              {added ? <Check size={18} color="#fff" /> : <Plus size={18} color="#fff" />}
+                         </TouchableOpacity>
                     </View>
-               )}
-               <View className="items-center mb-3 bg-neutral-50 rounded-3xl p-3 h-[120px] justify-center overflow-hidden">
-                    <Image
-                         source={{ uri: item.image || DUMMY_PRODUCTS[0].image }}
-                         className="w-full h-full"
-                         resizeMode="contain"
-                    />
-                    <TouchableOpacity className="absolute bottom-[-10px] right-[-10px] bg-primary-branding p-2.5 rounded-2xl shadow-premium">
-                         <Plus size={18} color="#fff" />
-                    </TouchableOpacity>
-               </View>
-               <View className="mt-2">
-                    <Text className="text-neutral-900 font-black text-sm" numberOfLines={2}>{item.name}</Text>
-                    <View className="flex-row items-center mt-1">
-                         <View style={{ backgroundColor: sColor + '22' }} className="px-2 py-0.5 rounded-lg">
-                              <Text style={{ color: sColor }} className="text-[9px] font-black uppercase">{stock}</Text>
+                    <View className="mt-2 text-wrap">
+                         <Text className="text-neutral-900 font-black text-sm" numberOfLines={2}>{item.name}</Text>
+                         <View className="flex-row items-center mt-1">
+                              <View style={{ backgroundColor: sColor + '22' }} className="px-2 py-0.5 rounded-lg">
+                                   <Text style={{ color: sColor }} className="text-[9px] font-black uppercase">{stock}</Text>
+                              </View>
+                         </View>
+                         <View className="flex-row items-baseline mt-2">
+                              <Text className="text-primary-branding font-black text-lg">₹{item.price}</Text>
+                              <Text className="text-neutral-400 text-xs line-through ml-2">₹{mrp}</Text>
                          </View>
                     </View>
-                    <View className="flex-row items-baseline mt-2">
-                         <Text className="text-primary-branding font-black text-lg">₹{item.price}</Text>
-                         <Text className="text-neutral-400 text-xs line-through ml-2">₹{mrp}</Text>
-                    </View>
-               </View>
-          </TouchableOpacity>
+               </TouchableOpacity>
+          </View>
      );
 });
 
 // ── Main Screen ──────────────────────────────────────────────────
 export const CustomerHomeScreen = () => {
-     const navigation = useNavigation<any>();
      const { openDrawer } = useDrawer();
+     const { addToCart } = useCart();
+     const { address, initializeLocation } = useLocationStore();
 
      const [products, setProducts] = useState<any[]>(DUMMY_PRODUCTS);
      const [activeCategory, setActiveCategory] = useState('All');
      const [searchText, setSearchText] = useState('');
 
-     // Fetch real products once — no dependency needed
      useEffect(() => {
+          initializeLocation();
           let cancelled = false;
           fetch(`${API_URL}/products`)
                .then(res => res.ok ? res.json() : null)
@@ -204,9 +204,8 @@ export const CustomerHomeScreen = () => {
                })
                .catch(() => { /* keep dummy */ });
           return () => { cancelled = true; };
-     }, []);
+     }, [initializeLocation]);
 
-     // Derive filtered list — recomputes only when inputs change
      const filtered = useMemo(() => {
           let result = products;
           if (activeCategory !== 'All') {
@@ -224,15 +223,14 @@ export const CustomerHomeScreen = () => {
 
      return (
           <View className="flex-1 bg-background">
-               {/* ── Header ─────────────────────────────────────────────── */}
                <SafeAreaView edges={['top']} className="bg-white pb-4 shadow-sm">
                     <View className="px-6 pt-4 flex-row justify-between items-center">
                          <View className="flex-1">
                               <Text className="text-primary-branding text-2xl font-black italic tracking-tighter">FarminGo</Text>
-                              <TouchableOpacity className="flex-row items-center mt-1">
+                              <TouchableOpacity className="flex-row items-center mt-1" onPress={initializeLocation}>
                                    <MapPin size={12} color="#64748B" />
                                    <Text className="text-neutral-500 text-xs font-bold ml-1" numberOfLines={1}>
-                                        Maharashtra Housing Board Pune
+                                        {address || 'Detecting location...'}
                                    </Text>
                               </TouchableOpacity>
                          </View>
@@ -245,7 +243,6 @@ export const CustomerHomeScreen = () => {
                          </TouchableOpacity>
                     </View>
 
-                    {/* Search Bar */}
                     <View className="px-6 mt-5">
                          <View className="bg-neutral-100 rounded-[24px] flex-row items-center px-5 py-4 border border-neutral-200">
                               <Search size={20} color="#94A3B8" />
@@ -256,17 +253,14 @@ export const CustomerHomeScreen = () => {
                                    value={searchText}
                                    onChangeText={setSearchText}
                                    returnKeyType="search"
-                                   clearButtonMode="while-editing"
                               />
                          </View>
                     </View>
                </SafeAreaView>
 
                <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-                    {/* ── Banner Carousel ─────────────────────────────────── */}
                     <BannerCarousel />
 
-                    {/* ── Category Tabs ───────────────────────────────────── */}
                     <View className="mt-6 px-6">
                          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                               <View className="flex-row">
@@ -288,7 +282,6 @@ export const CustomerHomeScreen = () => {
                          </ScrollView>
                     </View>
 
-                    {/* ── Product Grid ─────────────────────────────────────── */}
                     <View className="px-6 mt-6 mb-24">
                          <View className="flex-row justify-between items-center mb-6">
                               <View>
@@ -299,27 +292,19 @@ export const CustomerHomeScreen = () => {
                                         {filtered.length} items found
                                    </Text>
                               </View>
-                              <View className="bg-primary-light px-4 py-2 rounded-2xl">
-                                   <Text className="text-primary-branding text-[10px] font-black uppercase tracking-widest">
-                                        Best Prices
-                                   </Text>
-                              </View>
                          </View>
 
-                         {filtered.length === 0 ? (
-                              <View className="items-center py-20">
-                                   <ShoppingBag size={48} color="#CBD5E1" />
-                                   <Text className="text-neutral-400 font-bold mt-4 uppercase tracking-widest text-xs">
-                                        No products found
-                                   </Text>
-                              </View>
-                         ) : (
-                              <View className="flex-row flex-wrap justify-between">
-                                   {filtered.map((item: any) => (
-                                        <ProductCard key={item._id} item={item} />
-                                   ))}
-                              </View>
-                         )}
+                         <View className="flex-row flex-wrap justify-between">
+                              {filtered.map((item: any) => (
+                                   <ProductCard key={item._id} item={item} onAdd={addToCart} />
+                              ))}
+                              {filtered.length === 0 && (
+                                   <View className="items-center py-20 w-full">
+                                        <ShoppingBag size={48} color="#CBD5E1" />
+                                        <Text className="text-neutral-400 font-bold mt-4 uppercase tracking-widest text-xs text-center">No products found</Text>
+                                   </View>
+                              )}
+                         </View>
                     </View>
                </ScrollView>
           </View>

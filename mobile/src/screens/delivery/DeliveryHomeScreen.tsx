@@ -27,12 +27,10 @@ export const DeliveryHomeScreen = () => {
      const { user, logout } = useAuth();
      const [isOnline, setIsOnline] = useState(true);
      const [summary, setSummary] = useState({
-          earnings: DELIVERY_STATS_DUMMY.totalEarnings,
-          completedCount: DELIVERY_STATS_DUMMY.deliveredCount,
+          earnings: 0,
+          completedCount: 0,
      });
-     const [activeTasks, setActiveTasks] = useState<any[]>(() =>
-          DUMMY_ORDERS.filter(o => o.status === 'assigned' || o.status === 'pending').slice(0, 3)
-     );
+     const [activeTasks, setActiveTasks] = useState<any[]>([]);
      const [isLoading, setIsLoading] = useState(false);
      const [refreshing, setRefreshing] = useState(false);
 
@@ -40,10 +38,10 @@ export const DeliveryHomeScreen = () => {
           try {
                const sumRes = await fetch(`${API_URL}/orders/delivery/${user?.id}/summary`);
                const sumData = await sumRes.json();
-               if (sumRes.ok && (sumData.totalEarnings || sumData.deliveredCount)) {
+               if (sumRes.ok) {
                     setSummary({
-                         earnings: sumData.totalEarnings || DELIVERY_STATS_DUMMY.totalEarnings,
-                         completedCount: sumData.deliveredCount || DELIVERY_STATS_DUMMY.deliveredCount,
+                         earnings: sumData.totalEarnings || 0,
+                         completedCount: sumData.deliveredCount || 0,
                     });
                }
 

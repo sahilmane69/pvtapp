@@ -12,13 +12,6 @@ import { Home, ShoppingCart, LayoutDashboard, ClipboardList, Zap } from 'lucide-
 
 const Tab = createBottomTabNavigator();
 
-// Stable component reference — never use inline arrow functions as tab components
-const QuizPlaceholder = () => (
-     <View className="flex-1 items-center justify-center bg-white">
-          <Text className="text-xl font-bold text-neutral-900">Quiz Screen</Text>
-          <Text className="text-neutral-500 mt-2">Coming Soon!</Text>
-     </View>
-);
 
 
 /** Inner tabs — must be inside DrawerProvider so CustomerDrawer can read context */
@@ -53,7 +46,6 @@ const CustomerTabs = () => (
                     if (route.name === 'Cart') return <ShoppingCart size={size} color={color} />;
                     if (route.name === 'Dashboard') return <LayoutDashboard size={size} color={color} />;
                     if (route.name === 'Orders') return <ClipboardList size={size} color={color} />;
-                    if (route.name === 'Quiz') return <Zap size={size} color={color} />;
                     return null;
                },
           })}
@@ -62,7 +54,6 @@ const CustomerTabs = () => (
           <Tab.Screen name="Cart" component={CartScreen} />
           <Tab.Screen name="Dashboard" component={CustomerDashboardScreen} options={{ tabBarLabel: 'Dashboard' }} />
           <Tab.Screen name="Orders" component={CustomerOrdersScreen} />
-          <Tab.Screen name="Quiz" component={QuizPlaceholder} />
      </Tab.Navigator>
 );
 
