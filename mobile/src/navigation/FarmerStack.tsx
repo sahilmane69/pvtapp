@@ -9,6 +9,8 @@ import { OrderConfirmationScreen } from '../screens/farmer/OrderConfirmationScre
 import { AddProductScreen } from '../features/farmer/AddProduct';
 import { FarmerOrdersScreen } from '../screens/farmer/FarmerOrdersScreen';
 import { PaymentScreen } from '../screens/farmer/PaymentScreen';
+import { MockPaymentAppScreen } from '../screens/farmer/MockPaymentAppScreen';
+import { OrderReceiptScreen } from '../screens/farmer/OrderReceiptScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,8 +32,10 @@ export const FarmerStack = () => {
                <Stack.Screen name="Cart" component={CartScreen} options={{ title: 'My Cart' }} />
                <Stack.Screen name="OrderConfirmation" component={OrderConfirmationScreen} options={{ headerShown: false }} />
                <Stack.Screen name="AddProduct" component={AddProductScreen} options={{ title: 'Manage My Products' }} />
-               <Stack.Screen name="Payment" component={PaymentScreen} options={{ headerShown: false }} />
-               <Stack.Screen name="FarmerOrders" component={FarmerOrdersScreen} options={{ title: 'My Sales' }} />
+                <Stack.Screen name="Payment" component={PaymentScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="MockPaymentApp" component={MockPaymentAppScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="OrderReceipt" component={OrderReceiptScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="FarmerOrders" component={FarmerOrdersScreen} options={{ title: 'My Sales' }} />
           </Stack.Navigator>
      );
 };

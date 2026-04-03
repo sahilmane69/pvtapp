@@ -61,49 +61,26 @@ export const PaymentScreen = () => {
      };
 
      const handlePayment = async () => {
-          setIsLoading(true);
+          if (!user?.id) {
+               Alert.alert('Error', 'User not logged in');
+               return;
+          }
 
-          // Simulate payment processing delay
-          setTimeout(async () => {
-               try {
-                    if (!user?.id) {
-                         Alert.alert('Error', 'User not logged in');
-                         setIsLoading(false);
-                         return;
-                    }
+          const orderData = {
+               farmerId: user.id,
+               items: cartItems.map(item => ({
+                    productId: item.id || item._id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+               })),
+               totalAmount: total,
+               deliveryAddress: deliveryAddress,
+               deliveryLocation: locationCoords
+          };
 
-                    const response = await fetch(`${API_URL}/orders`, {
-                         method: 'POST',
-                         headers: { 'Content-Type': 'application/json' },
-                         body: JSON.stringify({
-                              farmerId: user.id,
-                              items: cartItems.map(item => ({
-                                   productId: item.id,
-                                   name: item.name,
-                                   price: item.price,
-                                   quantity: item.quantity
-                              })),
-                              totalAmount: total,
-                              deliveryAddress: deliveryAddress,
-                              deliveryLocation: locationCoords
-                         }),
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok) {
-                         clearCart();
-                         navigation.navigate('OrderConfirmation', { orderId: data.orderId || data._id });
-                    } else {
-                         Alert.alert('Payment Failed', data.message || 'Server error');
-                    }
-               } catch (error) {
-                    console.error(error);
-                    Alert.alert('Error', 'Connection failed');
-               } finally {
-                    setIsLoading(false);
-               }
-          }, 2000); // 2 second fake processing time
+          // Redirect to "External Payment App" (Mock)
+          navigation.navigate('MockPaymentApp', { orderData });
      };
 
      return (
