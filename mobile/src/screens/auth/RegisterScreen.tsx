@@ -41,13 +41,14 @@ export const RegisterScreen = () => {
                     Alert.alert('Server Error', 'Invalid response from server');
                     return;
                }
-
                if (response.ok) {
-                    // Auto-login after registration as CUSTOMER
+                    // Auto-login after registration
                     const userData = data.user;
-                    await setUser({ id: userData.id, username: userData.username, role: 'CUSTOMER' });
-                    await setUserRole('CUSTOMER');
+                    await setUser({ id: userData.id, username: userData.username, role: null });
+                    // Explicitly unset role to stay in AuthStack
+                    await setUserRole(null);
                     Alert.alert('Welcome to FarminGo!', 'Your account has been created successfully!');
+                    navigation.navigate('RoleSelection');
                } else {
                     Alert.alert('Register failed', data?.message || 'Something went wrong');
                }

@@ -67,7 +67,10 @@ export const PaymentScreen = () => {
           }
 
           const orderData = {
-               farmerId: user.id,
+               customerId: user.id,
+               farmerId: cartItems.length > 0 && (cartItems[0] as any).farmerId 
+                    ? (cartItems[0] as any).farmerId 
+                    : user.id,
                items: cartItems.map(item => ({
                     productId: item.id || item._id,
                     name: item.name,
@@ -187,9 +190,10 @@ export const PaymentScreen = () => {
                               </>
                          )}
                     </TouchableOpacity>
-                    <Text className="text-center text-gray-400 text-xs mt-3 flex-row items-center justify-center">
-                         <Lock size={12} color="#9ca3af" /> 100% Secure Transaction
-                    </Text>
+                    <View className="flex-row items-center justify-center mt-3">
+                         <Lock size={12} color="#9ca3af" />
+                         <Text className="text-center text-gray-400 text-xs ml-1">100% Secure Transaction</Text>
+                    </View>
                </View>
           </SafeAreaView>
      );

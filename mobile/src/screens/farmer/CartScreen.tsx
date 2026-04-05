@@ -101,8 +101,8 @@ export const CartScreen = () => {
                     )}
                />
 
-               <View className="absolute bottom-0 left-0 right-0 bg-white p-6 rounded-t-5xl shadow-premium border-t border-neutral-50">
-                    <View className="space-y-3 mb-6">
+               <View className="absolute bottom-[85px] left-0 right-0 bg-white p-6 rounded-t-5xl shadow-premium border-t border-neutral-50">
+                    <View className="space-y-3 mb-2">
                          <View className="flex-row justify-between">
                               <Text className="text-neutral-500 font-medium">Subtotal</Text>
                               <Text className="text-neutral-900 font-bold">₹{total.toFixed(2)}</Text>
@@ -111,17 +111,17 @@ export const CartScreen = () => {
                               <Text className="text-neutral-500 font-medium">Delivery Fee</Text>
                               <Text className="text-green-600 font-bold">FREE</Text>
                          </View>
-                         <View className="border-t border-neutral-100 pt-3 flex-row justify-between items-center">
+                         <View className="border-t border-neutral-100 pt-5 flex-row justify-between items-center">
                               <View>
                                    <Text className="text-neutral-400 text-xs font-bold uppercase">Total Amount</Text>
                                    <Text className="text-3xl font-black text-primary-branding italic">₹{total.toFixed(2)}</Text>
                               </View>
                               <TouchableOpacity
-                                   className="bg-primary-branding px-8 py-5 rounded-3xl shadow-lg flex-row items-center"
+                                   className="bg-primary-branding px-10 py-6 rounded-full shadow-lg flex-row items-center"
                                    onPress={handlePlaceOrder}
                               >
-                                   <Text className="text-white font-black uppercase tracking-widest mr-2">Checkout</Text>
-                                   <ArrowRight size={20} color="white" />
+                                   <Text className="text-white font-black text-lg uppercase tracking-widest mr-2">Checkout</Text>
+                                   <ArrowRight size={24} color="white" />
                               </TouchableOpacity>
                          </View>
                     </View>
